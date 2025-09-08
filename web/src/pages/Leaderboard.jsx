@@ -85,14 +85,20 @@ export default function Leaderboard(){
   return (
     <div>
 
-      {/* #1 — full width */}
+      {/* Subheader to add visual weight */}
+      <div className="glass card" style={{marginBottom:24, textAlign:'center'}}>
+        <h2 style={{margin:0}}>Top Wagerers</h2>
+        <div className="small-note">Live from Yeet API · Timeframe: {timeframe} · TZ: {tz}</div>
+      </div>
+
+      {/* #1 — centered large card */}
       {top1.length>0 && (
-        <div className="top3" style={{gridTemplateColumns:'repeat(12,1fr)'}}>
+        <div className="top3" style={{justifyContent:'center'}}>
           {top1.map((r)=>(
-            <div key={r.id||r.username} className="top-card glass top-one">
+            <div key={r.id||r.username} className="top-card glass top-one glow">
               <div className="top-badge">#1 <span className="crown">👑</span></div>
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
-                {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:32,borderRadius:6}}/>}
+                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:32,borderRadius:6}}/>}
                 <div style={{fontSize:26,fontWeight:900,color:'var(--accent)'}}>@{r.username}</div>
                 <div style={{opacity:.85}}>Volume</div>
                 <div style={{fontSize:36,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
@@ -102,14 +108,14 @@ export default function Leaderboard(){
         </div>
       )}
 
-      {/* #2 and #3 — two columns */}
+      {/* #2 and #3 — centered side by side */}
       {top2and3.length>0 && (
-        <div className="top3" style={{gridTemplateColumns:'repeat(12,1fr)'}}>
+        <div className="top3" style={{justifyContent:'center'}}>
           {top2and3.map((r, i)=>(
-            <div key={r.id||r.username} className="top-card glass top-two-three">
+            <div key={r.id||r.username} className="top-card glass top-two-three glow">
               <div className="top-badge">#{i+2} <span className="crown">👑</span></div>
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:26,borderRadius:6}}/>}
+                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:26,borderRadius:6}}/>}
                 <div style={{fontSize:20,fontWeight:800,color:'var(--accent)'}}>@{r.username}</div>
                 <div style={{opacity:.85}}>Volume</div>
                 <div style={{fontSize:28,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
@@ -124,7 +130,7 @@ export default function Leaderboard(){
         <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
           <div>
             <h2 style={{margin:'0 0 4px'}}>Leaderboard</h2>
-            <div className="small-note">Timeframe: {timeframe} · TZ: {tz}</div>
+            <div className="small-note">Top 15 overall</div>
           </div>
         </div>
 
