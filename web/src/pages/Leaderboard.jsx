@@ -47,6 +47,7 @@ export default function Leaderboard(){
   const [err,setErr]=useState('')
   const {data:ui}=useKV('ui')
   const {data:integrations}=useKV('integrations')
+  const {data:prizes}=useKV('prizes')              // ← pull prizes from Admin
   const timeframe=ui?.timeframe??'24h'; const tz=ui?.timezone??'America/Mexico_City'
 
   useEffect(()=>{(async()=>{
@@ -82,6 +83,10 @@ export default function Leaderboard(){
   const top2and3 = useMemo(()=> rows.slice(1,3),[rows])
   const rest = useMemo(()=> rows.slice(3),[rows])
 
+  // Prize helpers
+  const prizeAt = (i) => Array.isArray(prizes) && prizes[i] ? prizes[i] : null
+  const fmtPrize = (p) => !p ? '' : [p.name, p.amount].filter(Boolean).join(' · ')
+
   return (
     <div>
 
@@ -97,6 +102,12 @@ export default function Leaderboard(){
           {top1.map((r)=>(
             <div key={r.id||r.username} className="top-card glass top-one glow">
               <div className="top-badge">#1 <span className="crown">👑</span></div>
+
+              {/* Prize tag (if provided) */}
+              {prizeAt(0) && (
+                <div className="prize-tag">🏆 {fmtPrize(prizeAt(0))}</div>
+              )}
+
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
                 {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:32,borderRadius:6}}/>}
                 <div style={{fontSize:26,fontWeight:900,color:'var(--accent)'}}>@{r.username}</div>
@@ -114,6 +125,12 @@ export default function Leaderboard(){
           {top2and3.map((r, i)=>(
             <div key={r.id||r.username} className="top-card glass top-two-three glow">
               <div className="top-badge">#{i+2} <span className="crown">👑</span></div>
+
+              {/* Prize tag (if provided) */}
+              {prizeAt(i+1) && (
+                <div className="prize-tag">🎁 {fmtPrize(prizeAt(i+1))}</div>
+              )}
+
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
                 {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:26,borderRadius:6}}/>}
                 <div style={{fontSize:20,fontWeight:800,color:'var(--accent)'}}>@{r.username}</div>
@@ -122,6 +139,19 @@ export default function Leaderboard(){
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Optional full prize bar */}
+      {Array.isArray(prizes) && prizes.length > 0 && (
+        <div className="glass card" style={{marginBottom:24}}>
+          <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center'}}>
+            {prizes.map((p,idx)=>(
+              <div key={idx} className="chip">
+                {idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':'🎖️'} {fmtPrize(p)}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -134,7 +164,8 @@ export default function Leaderboard(){
           </div>
         </div>
 
-        {err && <div className="err" style={{marginTop:10}}>{err}</div>}
+        {/* Only show warning if we truly have no rows */}
+        {rows.length===0 && err && <div className="err" style={{marginTop:10}}>{err}</div>}
 
         <table style={{width:'100%', marginTop:12, borderCollapse:'collapse'}}>
           <thead>
@@ -145,7 +176,9 @@ export default function Leaderboard(){
             </tr>
           </thead>
           <tbody>
-            {rest.length===0 && <tr><td colSpan={3} style={{padding:12,opacity:.75}}>Add more than 3 entries to see the list view.</td></tr>}
+            {rest.length===0 && rows.length>0 && (
+              <tr><td colSpan={3} style={{padding:12,opacity:.75}}>Add more than 3 entries to see the list view.</td></tr>
+            )}
             {rest.map((r, idx) => (
               <tr key={r.id || r.username}>
                 <td style={{padding:'10px 6px'}}>{idx+4}</td>
