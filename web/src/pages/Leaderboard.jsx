@@ -78,58 +78,76 @@ export default function Leaderboard(){
     else setErr('No data. Configure Yeet APIs in Admin or seed Supabase.')
   })()},[integrations])
 
-  const top3 = useMemo(()=> rows.slice(0,3),[rows])
+  const top1 = useMemo(()=> rows[0] ? [rows[0]] : [],[rows])
+  const top2and3 = useMemo(()=> rows.slice(1,3),[rows])
   const rest = useMemo(()=> rows.slice(3),[rows])
 
   return (
     <div>
-      <div className="top3">
-        {top3.map((r,i)=>(
-          <div key={r.id||r.username} className="top-card glass">
-            <div className="top-rank">#{i+1} <span className="crown">👑</span></div>
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:26,borderRadius:6}}/>}
-              <div style={{fontSize:20,fontWeight:800,color:'var(--accent)'}}>@{r.username}</div>
-            </div>
-            <div style={{marginTop:6,opacity:.85}}>Volume</div>
-            <div style={{fontSize:28,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
-            <div style={{display:'flex',gap:12,marginTop:8,opacity:.9}}>
-              {r.tier && <div>Tier: <b>{r.tier}</b></div>}
-              <div>Last: {new Date(r.last_played).toLocaleString()}</div>
-            </div>
-          </div>
-        ))}
-      </div>
 
+      {/* #1 — full width */}
+      {top1.length>0 && (
+        <div className="top3" style={{gridTemplateColumns:'repeat(12,1fr)'}}>
+          {top1.map((r)=>(
+            <div key={r.id||r.username} className="top-card glass top-one">
+              <div className="top-badge">#1 <span className="crown">👑</span></div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+                {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:32,borderRadius:6}}/>}
+                <div style={{fontSize:26,fontWeight:900,color:'var(--accent)'}}>@{r.username}</div>
+                <div style={{opacity:.85}}>Volume</div>
+                <div style={{fontSize:36,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* #2 and #3 — two columns */}
+      {top2and3.length>0 && (
+        <div className="top3" style={{gridTemplateColumns:'repeat(12,1fr)'}}>
+          {top2and3.map((r, i)=>(
+            <div key={r.id||r.username} className="top-card glass top-two-three">
+              <div className="top-badge">#{i+2} <span className="crown">👑</span></div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+                {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:26,borderRadius:6}}/>}
+                <div style={{fontSize:20,fontWeight:800,color:'var(--accent)'}}>@{r.username}</div>
+                <div style={{opacity:.85}}>Volume</div>
+                <div style={{fontSize:28,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Rest of list */}
       <div className="glass card">
-        <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
-          <div><h2 style={{margin:'0 0 4px'}}>Leaderboard</h2><div className="small-note">Timeframe: {timeframe} · TZ: {tz}</div></div>
+        <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
+          <div>
+            <h2 style={{margin:'0 0 4px'}}>Leaderboard</h2>
+            <div className="small-note">Timeframe: {timeframe} · TZ: {tz}</div>
+          </div>
         </div>
 
         {err && <div className="err" style={{marginTop:10}}>{err}</div>}
 
-        <table style={{width:'100%',marginTop:12,borderCollapse:'collapse'}}>
+        <table style={{width:'100%', marginTop:12, borderCollapse:'collapse'}}>
           <thead>
-            <tr style={{textAlign:'left',opacity:.7}}>
+            <tr style={{textAlign:'left', opacity:.7}}>
               <th style={{padding:'8px 6px'}}>#</th>
               <th style={{padding:'8px 6px'}}>User</th>
               <th style={{padding:'8px 6px'}}>Volume</th>
-              <th style={{padding:'8px 6px'}}>Tier</th>
-              <th style={{padding:'8px 6px'}}>Last Played</th>
             </tr>
           </thead>
           <tbody>
-            {rest.length===0 && <tr><td colSpan={5} style={{padding:12,opacity:.75}}>Add more than 3 entries to see the list view.</td></tr>}
-            {rest.map((r,idx)=>(
-              <tr key={r.id||r.username}>
+            {rest.length===0 && <tr><td colSpan={3} style={{padding:12,opacity:.75}}>Add more than 3 entries to see the list view.</td></tr>}
+            {rest.map((r, idx) => (
+              <tr key={r.id || r.username}>
                 <td style={{padding:'10px 6px'}}>{idx+4}</td>
-                <td style={{padding:'10px 6px',display:'flex',alignItems:'center',gap:8}}>
-                  {r.tierImage && <img src={r.tierImage} alt={r.tier} style={{height:18, borderRadius:4}}/>}
+                <td style={{padding:'10px 6px', display:'flex', alignItems:'center', gap:8}}>
+                  {r.tierImage && <img src={r.tierImage} alt="" style={{height:18, borderRadius:4}}/>}
                   @{r.username}
                 </td>
                 <td style={{padding:'10px 6px'}}>${Number(r.wagers||0).toLocaleString()}</td>
-                <td style={{padding:'10px 6px'}}>{r.tier||'—'}</td>
-                <td style={{padding:'10px 6px'}}>{new Date(r.last_played).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
