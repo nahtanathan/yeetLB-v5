@@ -3,7 +3,7 @@ services:
     runtime: static
     name: yeetlb-web-v5
     rootDir: web
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_SUPABASE_URL
@@ -26,7 +26,7 @@ services:
     name: yeetlb-proxy-v5
     env: node
     rootDir: server
-    buildCommand: npm ci
+    buildCommand: npm install
     startCommand: node index.js
     envVars:
       - key: PORT
