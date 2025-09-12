@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useKV } from '../components/Shared'
 
+/* ---------- data helpers ---------- */
 const normalize = (arr) => (Array.isArray(arr)?arr:[]).map(d=>({
   id: d.username, username: d.username,
   wagers: Number(d.volume||0), net_win: 0,
@@ -52,6 +53,7 @@ function formatRemaining(ms){
   return days>0 ? `${days}d ${hrs}:${mins}:${secs}` : `${hrs}:${mins}:${secs}`
 }
 
+/* ---------- UI ---------- */
 export default function Leaderboard(){
   const [rows,setRows]=useState([])
   const [err,setErr]=useState('')
@@ -60,8 +62,9 @@ export default function Leaderboard(){
   const {data:prizes}=useKV('prizes')
   const {data:countdown}=useKV('countdown')
 
-  const timeframe=ui?.timeframe??'24h'; const tz=ui?.timezone??'America/Mexico_City'
+  const timeframe=ui?.timeframe??'24h'; const tz=ui?.timezone??'CST'
 
+  // countdown tick
   const [now, setNow] = useState(Date.now())
   useEffect(()=>{ const id=setInterval(()=>setNow(Date.now()),1000); return ()=>clearInterval(id) },[])
   const remainingMs = useMemo(()=>{
@@ -71,6 +74,7 @@ export default function Leaderboard(){
     return Math.max(0, end - now)
   }, [countdown, now])
 
+  // load data
   useEffect(()=>{(async()=>{
     setErr('')
     const apis = integrations?.yeetApis || []
@@ -81,17 +85,14 @@ export default function Leaderboard(){
       try{
         if (useProxy || proxyBase || import.meta.env.VITE_PROXY_BASE){
           const base = proxyBase || import.meta.env.VITE_PROXY_BASE
-          const r = await fetchProxy(base, endpoint, apiKey, startDate, endDate)
-          results.push(r)
+          results.push(await fetchProxy(base, endpoint, apiKey, startDate, endDate))
         } else {
-          const r = await fetchDirect(endpoint, apiKey, startDate, endDate)
-          results.push(r)
+          results.push(await fetchDirect(endpoint, apiKey, startDate, endDate))
         }
       }catch(e){ console.warn('API failed', api?.name, e); setErr('Some API calls failed; showing what we could load.') }
     }
     if (results.length){
-      const merged = mergeByUser(results)
-      setRows(merged.slice(0,15))
+      setRows(mergeByUser(results).slice(0,15))
       return
     }
     const { data, error } = await supabase.from('leaderboard_entries').select('*').order('wagers',{ascending:false}).limit(15)
@@ -100,60 +101,88 @@ export default function Leaderboard(){
     else setErr('No data. Configure Yeet APIs in Admin or seed Supabase.')
   })()},[integrations])
 
-  const top1 = useMemo(()=> rows[0] ? [rows[0]] : [],[rows])
-  const top2and3 = useMemo(()=> rows.slice(1,3),[rows])
-  const rest = useMemo(()=> rows.slice(3),[rows])
+  const top1 = rows[0] ? [rows[0]] : []
+  const top2and3 = rows.slice(1,3)
+  const rest = rows.slice(3)
 
   const prizeAt = (i) => Array.isArray(prizes) && prizes[i] ? prizes[i] : null
   const fmtPrize = (p) => !p ? '' : [p.name, p.amount].filter(Boolean).join(' · ')
 
   return (
     <div>
-      <div className="glass card" style={{marginBottom:24, textAlign:'center'}}>
-        <h2 style={{margin:0}}>Top Wagerers</h2>
+
+      {/* Subheader + big timer */}
+      <div className="glass card subheader">
+        <h2 className="title">Top Wagerers</h2>
         <div className="small-note">Live from Yeet API · Timeframe: {timeframe} · TZ: {tz}</div>
+
         {remainingMs !== null && (
-          <div className="countdown">
-            <span className="countdown-label">{countdown?.label || 'Ends in'}</span>
-            <span className="countdown-time">{formatRemaining(remainingMs)}</span>
+          <div className="timer-pill">
+            <span className="timer-icon">⏳</span>
+            <span className="timer-label">{countdown?.label || 'Ends in'}</span>
+            <span className="timer-value">{formatRemaining(remainingMs)}</span>
           </div>
         )}
       </div>
 
+      {/* #1 */}
       {top1.length>0 && (
         <div className="top3" style={{justifyContent:'center'}}>
           {top1.map((r)=>(
-            <div key={r.id||r.username} className="top-card glass top-one glow">
-              <div className="top-badge">#1 <span className="crown">👑</span></div>
-              {prizeAt(0) && <div className="prize-tag">🏆 {fmtPrize(prizeAt(0))}</div>}
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
-                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:32,borderRadius:6}}/>}
-                <div style={{fontSize:26,fontWeight:900,color:'var(--accent)'}}>@{r.username}</div>
-                <div style={{opacity:.85}}>Volume</div>
-                <div style={{fontSize:36,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
+            <div key={r.id||r.username} className="hero-card glass glow">
+              {/* Big rank badge */}
+              <div className="mega-badge">
+                <span className="rank">#1</span> <span className="crown">👑</span>
+              </div>
+
+              {/* Big prize ribbon */}
+              {prizeAt(0) && (
+                <div className="prize-ribbon">
+                  <span className="ribbon-icon">🏆</span>
+                  <span className="ribbon-text">{fmtPrize(prizeAt(0))}</span>
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="hero-inner">
+                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} className="tier-img-lg"/>}
+                <div className="handle-lg">@{r.username}</div>
+                <div className="metric-label">Volume</div>
+                <div className="metric-lg">${Number(r.wagers||0).toLocaleString()}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* #2 & #3 */}
       {top2and3.length>0 && (
         <div className="top3" style={{justifyContent:'center'}}>
           {top2and3.map((r, i)=>(
-            <div key={r.id||r.username} className="top-card glass top-two-three glow">
-              <div className="top-badge">#{i+2} <span className="crown">👑</span></div>
-              {prizeAt(i+1) && <div className="prize-tag">🎁 {fmtPrize(prizeAt(i+1))}</div>}
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} style={{height:26,borderRadius:6}}/>}
-                <div style={{fontSize:20,fontWeight:800,color:'var(--accent)'}}>@{r.username}</div>
-                <div style={{opacity:.85}}>Volume</div>
-                <div style={{fontSize:28,fontWeight:900}}>${Number(r.wagers||0).toLocaleString()}</div>
+            <div key={r.id||r.username} className="hero-card small glass glow">
+              <div className="mega-badge sm">
+                <span className="rank">#{i+2}</span> <span className="crown">👑</span>
+              </div>
+
+              {prizeAt(i+1) && (
+                <div className="prize-ribbon sm">
+                  <span className="ribbon-icon">🎁</span>
+                  <span className="ribbon-text">{fmtPrize(prizeAt(i+1))}</span>
+                </div>
+              )}
+
+              <div className="hero-inner">
+                {r.tierImage && <img src={r.tierImage} alt={r.tier||'tier'} className="tier-img-sm"/>}
+                <div className="handle-sm">@{r.username}</div>
+                <div className="metric-label">Volume</div>
+                <div className="metric-sm">${Number(r.wagers||0).toLocaleString()}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Prize bar */}
       {Array.isArray(prizes) && prizes.length > 0 && (
         <div className="glass card" style={{marginBottom:24}}>
           <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center'}}>
@@ -166,6 +195,7 @@ export default function Leaderboard(){
         </div>
       )}
 
+      {/* Rest of leaderboard */}
       <div className="glass card">
         <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
           <div>
