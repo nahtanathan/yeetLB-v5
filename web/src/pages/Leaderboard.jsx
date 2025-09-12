@@ -42,7 +42,6 @@ function mergeByUser(lists){
   return Array.from(map.values()).sort((a,b)=>b.wagers-a.wagers)
 }
 
-// Format remaining ms as D:HH:MM:SS (hide days if zero)
 function formatRemaining(ms){
   if (ms <= 0) return '00:00:00'
   const s = Math.floor(ms/1000)
@@ -59,11 +58,10 @@ export default function Leaderboard(){
   const {data:ui}=useKV('ui')
   const {data:integrations}=useKV('integrations')
   const {data:prizes}=useKV('prizes')
-  const {data:countdown}=useKV('countdown')    // NEW: read countdown settings
+  const {data:countdown}=useKV('countdown')
 
   const timeframe=ui?.timeframe??'24h'; const tz=ui?.timezone??'America/Mexico_City'
 
-  // live countdown tick
   const [now, setNow] = useState(Date.now())
   useEffect(()=>{ const id=setInterval(()=>setNow(Date.now()),1000); return ()=>clearInterval(id) },[])
   const remainingMs = useMemo(()=>{
@@ -111,12 +109,9 @@ export default function Leaderboard(){
 
   return (
     <div>
-
-      {/* Subheader with optional countdown */}
       <div className="glass card" style={{marginBottom:24, textAlign:'center'}}>
         <h2 style={{margin:0}}>Top Wagerers</h2>
         <div className="small-note">Live from Yeet API · Timeframe: {timeframe} · TZ: {tz}</div>
-
         {remainingMs !== null && (
           <div className="countdown">
             <span className="countdown-label">{countdown?.label || 'Ends in'}</span>
@@ -125,7 +120,6 @@ export default function Leaderboard(){
         )}
       </div>
 
-      {/* #1 */}
       {top1.length>0 && (
         <div className="top3" style={{justifyContent:'center'}}>
           {top1.map((r)=>(
@@ -143,7 +137,6 @@ export default function Leaderboard(){
         </div>
       )}
 
-      {/* #2 & #3 */}
       {top2and3.length>0 && (
         <div className="top3" style={{justifyContent:'center'}}>
           {top2and3.map((r, i)=>(
@@ -161,7 +154,6 @@ export default function Leaderboard(){
         </div>
       )}
 
-      {/* Prize bar */}
       {Array.isArray(prizes) && prizes.length > 0 && (
         <div className="glass card" style={{marginBottom:24}}>
           <div style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center'}}>
@@ -174,7 +166,6 @@ export default function Leaderboard(){
         </div>
       )}
 
-      {/* Rest */}
       <div className="glass card">
         <div style={{display:'flex', alignItems:'baseline', justifyContent:'space-between'}}>
           <div>
