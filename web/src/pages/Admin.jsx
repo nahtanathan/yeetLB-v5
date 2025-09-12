@@ -148,9 +148,29 @@ export default function Admin(){
         </div>
         <div style={{display:'flex',gap:8,marginTop:10}}>
           <button className='btn' onClick={saveAll}>Save All</button>
-          <button className='btn' style={{background:'rgba(255,0,0,.2)',borderColor:'rgba(255,0,0,.4)'}} onClick={()=>{try{audioRef.current.play()}catch(e){}}}>🚫 Don’t press this</button>
-        </div>
-        <div className='small-note'>Plays a sound and animates the page. Cosmetic only.</div>
+          <div className='glass card' style={{gridColumn:'span 12'}}>
+  <h3>Chaos Button</h3>
+  <label style={{display:'block',marginBottom:8}}>
+    <input type='checkbox'
+      checked={!!chaos?.enabled}
+      onChange={e=>setChaos({...chaos,enabled:e.target.checked})}/>
+    Enabled
+  </label>
+  <div style={{display:'grid',gap:8,maxWidth:600}}>
+    <label>Song URL <input className='input'
+      value={chaos?.songUrl||''}
+      onChange={e=>setChaos({...chaos,songUrl:e.target.value})}/></label>
+    <label>Duration (ms) <input className='input' type='number'
+      value={chaos?.durationMs||10000}
+      onChange={e=>setChaos({...chaos,durationMs:Number(e.target.value)})}/></label>
+    <label>Intensity (0.5–2.0) <input className='input' type='number' step='0.1'
+      value={chaos?.intensity||1}
+      onChange={e=>setChaos({...chaos,intensity:Number(e.target.value)})}/></label>
+  </div>
+  <div className='small-note' style={{marginTop:10}}>Settings only. Trigger is now on the public Leaderboard page.</div>
+  <div style={{marginTop:12}}><button className='btn' onClick={saveAll}>Save All</button></div>
+</div>
+
       </div>
     </div>
   </div>)
