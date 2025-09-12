@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useKV } from '../components/Shared'
 
-/* ---------- helpers ---------- */
+/* ---------- helpers (kept in this file) ---------- */
 const normalize = (arr) =>
   (Array.isArray(arr) ? arr : []).map((d) => ({
     id: d.username,
@@ -63,7 +63,6 @@ export default function Leaderboard() {
   const [rows, setRows] = useState([])
   const [err, setErr] = useState('')
 
-  // KV configs
   const { data: ui } = useKV('ui')
   const { data: integrations } = useKV('integrations')
   const { data: prizes } = useKV('prizes')
@@ -128,7 +127,7 @@ export default function Leaderboard() {
     }
   }, [integrations])
 
-  // slice views
+  // slices
   const top1 = rows[0] ? [rows[0]] : []
   const top2and3 = rows.slice(1, 3)
   const rest = rows.slice(3)
