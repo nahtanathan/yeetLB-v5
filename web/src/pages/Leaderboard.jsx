@@ -268,12 +268,7 @@ export default function Leaderboard() {
       {chaos?.enabled && (
         <div className="glass card" style={{ marginTop: 24, textAlign: 'center' }}>
           <audio ref={audioRef} src={chaos?.songUrl || '/chaos.wav'} preload="auto" />
-          <h3>Secret Button</h3>
-          <button
-            className="btn"
-            style={{ background: 'rgba(255,0,0,.25)', borderColor: 'rgba(255,0,0,.5)', fontWeight: 800, fontSize: 18 }}
-            onClick={triggerChaos}
-          >
+                    >
             🚫 Don’t press this
           </button>
           <div className="small-note" style={{ marginTop: 8 }}>
