@@ -10,26 +10,24 @@ export default function Admin(){
   async function signOut(){await supabase.auth.signOut()}
 
   const uiKV=useKV('ui'); const prizesKV=useKV('prizes'); const chaosKV=useKV('chaos'); const integrationsKV=useKV('integrations')
-  const countdownKV = useKV('countdown')   // NEW: countdown KV
+  const countdownKV = useKV('countdown')
 
-  const [ui,setUI]=useState(null)
-  const [prizes,setPrizes]=useState([])
-  const [chaos,setChaos]=useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
+  const [ui,setUI]=useState(null); const [prizes,setPrizes]=useState([]); const [chaos,setChaos]=useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
   const [integrations,setIntegrations]=useState({yeetApis:[]})
   const [countdown,setCountdown]=useState({enabled:false,label:'Ends in',endAt:''})
 
-  useEffect(()=>{ if(uiKV.data) setUI(uiKV.data) },[uiKV.data])
-  useEffect(()=>{ if(Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
-  useEffect(()=>{ if(chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
-  useEffect(()=>{ if(integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
-  useEffect(()=>{ if(countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
+  useEffect(()=>{if(uiKV.data) setUI(uiKV.data)},[uiKV.data])
+  useEffect(()=>{if(Array.isArray(prizesKV.data)) setPrizes(prizesKV.data)},[prizesKV.data])
+  useEffect(()=>{if(chaosKV.data) setChaos(chaosKV.data)},[chaosKV.data])
+  useEffect(()=>{if(integrationsKV.data) setIntegrations(integrationsKV.data)},[integrationsKV.data])
+  useEffect(()=>{if(countdownKV.data) setCountdown(countdownKV.data)},[countdownKV.data])
 
   const saveAll=async()=>{
     await uiKV.save(ui||{})
     await prizesKV.save(prizes||[])
     await chaosKV.save(chaos||{})
     await integrationsKV.save(integrations||{yeetApis:[]})
-    await countdownKV.save(countdown||{enabled:false})   // NEW
+    await countdownKV.save(countdown||{enabled:false})
     alert('Saved to Supabase ✅')
   }
 
@@ -105,7 +103,7 @@ export default function Admin(){
                   <input className='input' placeholder='endDate (YYYY-MM-DD)' value={api.endDate||''} onChange={e=>updateApi(i,'endDate',e.target.value)}/>
                 </div>
                 <label><input type='checkbox' checked={!!api.useProxy} onChange={e=>updateApi(i,'useProxy',e.target.checked)}/> Use Proxy</label>
-                <input className='input' placeholder='Proxy Base (e.g., https://yeetlb-proxy-v5.onrender.com)' value={api.proxyBase||''} onChange={e=>updateApi(i,'proxyBase',e.target.value)}/>
+                <input className='input' placeholder='Proxy Base (e.g., https://yeetlb-proxy-v6.onrender.com)' value={api.proxyBase||''} onChange={e=>updateApi(i,'proxyBase',e.target.value)}/>
                 <button className='btn' onClick={()=>removeApi(i)}>Remove</button>
               </div>
             </div>
@@ -114,7 +112,7 @@ export default function Admin(){
         </div>
       </div>
 
-      {/* NEW: Countdown editor */}
+      {/* Countdown editor */}
       <div className='glass card' style={{gridColumn:'span 12'}}>
         <h3>Countdown</h3>
         <label style={{display:'block',marginBottom:8}}>
@@ -125,20 +123,19 @@ export default function Admin(){
             <input className='input' placeholder='Ends in' value={countdown.label||''} onChange={e=>setCountdown({...countdown,label:e.target.value})}/>
           </label>
           <label>End date/time
-            {/* Use datetime-local; store ISO on save */}
             <input
               className='input'
               type='datetime-local'
               value={(countdown.endAt ? new Date(countdown.endAt) : new Date()).toISOString().slice(0,16)}
               onChange={e=>{
-                // interpret as local and store as ISO string
-                const local = e.target.value;            // "YYYY-MM-DDTHH:mm"
-                const iso = new Date(local).toISOString();
+                const local = e.target.value
+                const iso = new Date(local).toISOString()
                 setCountdown({...countdown,endAt:iso})
               }}
             />
           </label>
         </div>
+        <div className='small-note'>Time is saved in ISO (UTC). Display uses your configured timezone label.</div>
       </div>
 
       <div className='glass card' style={{gridColumn:'span 12'}}>
