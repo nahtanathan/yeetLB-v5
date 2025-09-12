@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useKV } from '../components/Shared'
 
-/* ---------- helpers (kept in this file) ---------- */
+/* ---------- helpers (kept local) ---------- */
 const normalize = (arr) =>
   (Array.isArray(arr) ? arr : []).map((d) => ({
     id: d.username,
@@ -63,6 +63,7 @@ export default function Leaderboard() {
   const [rows, setRows] = useState([])
   const [err, setErr] = useState('')
 
+  // KV configs
   const { data: ui } = useKV('ui')
   const { data: integrations } = useKV('integrations')
   const { data: prizes } = useKV('prizes')
@@ -153,12 +154,12 @@ export default function Leaderboard() {
 
   return (
     <div
-  className={isChaos ? 'chaos-mode' : ''}
-  style={{
-    '--shake-intensity': `${(chaos?.intensity || 1) * 8}px`,
-    '--flash-intensity': `${Math.min(1, (chaos?.intensity || 1) * 0.6)}`
-  }}
->
+      className={isChaos ? 'chaos-mode' : ''}
+      style={{
+        '--shake-intensity': `${(chaos?.intensity || 1) * 8}px`,
+        '--flash-intensity': `${Math.min(1, (chaos?.intensity || 1) * 0.6)}`
+      }}
+    >
       {/* subheader & big timer */}
       <div className="glass card subheader">
         <h2 className="title">Top Wagerers</h2>
@@ -270,16 +271,17 @@ export default function Leaderboard() {
         </table>
       </div>
 
-      {/* chaos trigger at bottom */}
+      {/* chaos trigger (no heading, no descriptor) */}
       {chaos?.enabled && (
         <div className="glass card" style={{ marginTop: 24, textAlign: 'center' }}>
           <audio ref={audioRef} src={chaos?.songUrl || '/chaos.wav'} preload="auto" />
-                    >
+          <button
+            className="btn"
+            style={{ background: 'rgba(255,0,0,.25)', borderColor: 'rgba(255,0,0,.5)', fontWeight: 800, fontSize: 18 }}
+            onClick={triggerChaos}
+          >
             🚫 Don’t press this
           </button>
-          <div className="small-note" style={{ marginTop: 8 }}>
-            Unleashes chaos for {Math.floor((chaos?.durationMs || 10000) / 1000)}s
-          </div>
         </div>
       )}
     </div>
