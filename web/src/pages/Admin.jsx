@@ -10,14 +10,28 @@ export default function Admin(){
   async function signOut(){await supabase.auth.signOut()}
 
   const uiKV=useKV('ui'); const prizesKV=useKV('prizes'); const chaosKV=useKV('chaos'); const integrationsKV=useKV('integrations')
-  const [ui,setUI]=useState(null); const [prizes,setPrizes]=useState([]); const [chaos,setChaos]=useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
-  const [integrations,setIntegrations]=useState({yeetApis:[]})
-  useEffect(()=>{if(uiKV.data) setUI(uiKV.data)},[uiKV.data])
-  useEffect(()=>{if(Array.isArray(prizesKV.data)) setPrizes(prizesKV.data)},[prizesKV.data])
-  useEffect(()=>{if(chaosKV.data) setChaos(chaosKV.data)},[chaosKV.data])
-  useEffect(()=>{if(integrationsKV.data) setIntegrations(integrationsKV.data)},[integrationsKV.data])
+  const countdownKV = useKV('countdown')   // NEW: countdown KV
 
-  const saveAll=async()=>{await uiKV.save(ui||{});await prizesKV.save(prizes||[]);await chaosKV.save(chaos||{});await integrationsKV.save(integrations||{yeetApis:[]});alert('Saved to Supabase ✅')}
+  const [ui,setUI]=useState(null)
+  const [prizes,setPrizes]=useState([])
+  const [chaos,setChaos]=useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
+  const [integrations,setIntegrations]=useState({yeetApis:[]})
+  const [countdown,setCountdown]=useState({enabled:false,label:'Ends in',endAt:''})
+
+  useEffect(()=>{ if(uiKV.data) setUI(uiKV.data) },[uiKV.data])
+  useEffect(()=>{ if(Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
+  useEffect(()=>{ if(chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
+  useEffect(()=>{ if(integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
+  useEffect(()=>{ if(countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
+
+  const saveAll=async()=>{
+    await uiKV.save(ui||{})
+    await prizesKV.save(prizes||[])
+    await chaosKV.save(chaos||{})
+    await integrationsKV.save(integrations||{yeetApis:[]})
+    await countdownKV.save(countdown||{enabled:false})   // NEW
+    alert('Saved to Supabase ✅')
+  }
 
   const addPrize=()=>setPrizes([...(prizes||[]),{name:'',amount:''}])
   const updatePrize=(i,f,v)=>{const n=prizes.slice();n[i]={...n[i],[f]:v};setPrizes(n)}
@@ -97,6 +111,33 @@ export default function Admin(){
             </div>
           ))}
           <button className='btn' onClick={addApi}>+ Add API</button>
+        </div>
+      </div>
+
+      {/* NEW: Countdown editor */}
+      <div className='glass card' style={{gridColumn:'span 12'}}>
+        <h3>Countdown</h3>
+        <label style={{display:'block',marginBottom:8}}>
+          <input type='checkbox' checked={!!countdown.enabled} onChange={e=>setCountdown({...countdown,enabled:e.target.checked})}/> Enabled
+        </label>
+        <div style={{display:'grid',gap:8,maxWidth:560}}>
+          <label>Label
+            <input className='input' placeholder='Ends in' value={countdown.label||''} onChange={e=>setCountdown({...countdown,label:e.target.value})}/>
+          </label>
+          <label>End date/time
+            {/* Use datetime-local; store ISO on save */}
+            <input
+              className='input'
+              type='datetime-local'
+              value={(countdown.endAt ? new Date(countdown.endAt) : new Date()).toISOString().slice(0,16)}
+              onChange={e=>{
+                // interpret as local and store as ISO string
+                const local = e.target.value;            // "YYYY-MM-DDTHH:mm"
+                const iso = new Date(local).toISOString();
+                setCountdown({...countdown,endAt:iso})
+              }}
+            />
+          </label>
         </div>
       </div>
 
