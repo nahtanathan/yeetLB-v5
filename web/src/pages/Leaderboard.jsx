@@ -152,7 +152,13 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className={isChaos ? 'chaos-mode' : ''}>
+    <div
+  className={isChaos ? 'chaos-mode' : ''}
+  style={{
+    '--shake-intensity': `${(chaos?.intensity || 1) * 8}px`,
+    '--flash-intensity': `${Math.min(1, (chaos?.intensity || 1) * 0.6)}`
+  }}
+>
       {/* subheader & big timer */}
       <div className="glass card subheader">
         <h2 className="title">Top Wagerers</h2>
