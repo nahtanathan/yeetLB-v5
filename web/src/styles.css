@@ -166,3 +166,61 @@ a{color:inherit;text-decoration:none;opacity:.9} a:hover{opacity:1}
 :root[data-theme="light"] .cookie-bar{background:rgba(255,255,255,.75)}
 .cookie-text{flex:1;font-size:14px;line-height:1.35}
 .cookie-actions{display:flex;gap:8px}
+
+/* ===== Chaos effects ===== */
+@keyframes chaos-shake {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  10%  { transform: translate(calc(var(--shake-intensity) *  0.5), calc(var(--shake-intensity) * -0.3)) rotate(-0.5deg); }
+  20%  { transform: translate(calc(var(--shake-intensity) * -0.6), calc(var(--shake-intensity) *  0.4)) rotate(0.6deg); }
+  30%  { transform: translate(calc(var(--shake-intensity) *  0.7), calc(var(--shake-intensity) *  0.6)) rotate(-0.4deg); }
+  40%  { transform: translate(calc(var(--shake-intensity) * -0.8), calc(var(--shake-intensity) * -0.6)) rotate(0.8deg); }
+  50%  { transform: translate(0, 0) rotate(0deg); }
+  60%  { transform: translate(calc(var(--shake-intensity) *  0.6), calc(var(--shake-intensity) *  0.4)) rotate(0.4deg); }
+  70%  { transform: translate(calc(var(--shake-intensity) * -0.7), calc(var(--shake-intensity) * -0.5)) rotate(-0.6deg); }
+  80%  { transform: translate(calc(var(--shake-intensity) *  0.8), calc(var(--shake-intensity) * -0.4)) rotate(0.5deg); }
+  90%  { transform: translate(calc(var(--shake-intensity) * -0.5), calc(var(--shake-intensity) *  0.3)) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes chaos-flicker {
+  0%, 100%  { filter: none; }
+  25%       { filter: hue-rotate(10deg) contrast(1.05) saturate(1.1); }
+  50%       { filter: hue-rotate(-10deg) contrast(1.1) saturate(1.2); }
+  75%       { filter: hue-rotate(5deg) contrast(1.07) saturate(1.15); }
+}
+
+/* Fullscreen flash overlay while chaos is active */
+.chaos-mode::after{
+  content:'';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 40%, rgba(255,255,255, calc(var(--flash-intensity, .5) * .12)), transparent 60%),
+    radial-gradient(120% 80% at 60% 60%, rgba(43,255,136, calc(var(--flash-intensity, .5) * .10)), transparent 55%),
+    radial-gradient(120% 80% at 40% 70%, rgba(255,65,65,   calc(var(--flash-intensity, .5) * .08)), transparent 55%);
+  mix-blend-mode: screen;
+  animation: chaos-flicker 450ms linear infinite;
+  z-index: 60;
+}
+
+/* Shake the whole app container and add slight flicker to contents */
+.chaos-mode{
+  animation: chaos-shake 120ms linear infinite;
+}
+.chaos-mode .glass,
+.chaos-mode .header,
+.chaos-mode .container{
+  animation: chaos-flicker 600ms linear infinite;
+}
+
+/* Safety: respect user reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .chaos-mode,
+  .chaos-mode .glass,
+  .chaos-mode .header,
+  .chaos-mode .container,
+  .chaos-mode::after{
+    animation: none !important;
+  }
+}
