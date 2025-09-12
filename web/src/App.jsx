@@ -3,6 +3,7 @@ import { Link, Route, Routes } from 'react-router-dom'
 import Leaderboard from './pages/Leaderboard'
 import Admin from './pages/Admin'
 import { useKV, ThemeToggle, BGImage } from './components/Shared'
+import CookieConsent from './components/CookieConsent'
 import './styles.css'
 
 export default function App(){
@@ -30,6 +31,7 @@ export default function App(){
           <Route path='/admin' element={<Admin/>}/>
         </Routes>
       </div>
+      <CookieConsent/>
     </div>
   )
 }
