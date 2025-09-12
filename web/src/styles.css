@@ -16,252 +16,30 @@ a{color:inherit;text-decoration:none;opacity:.9} a:hover{opacity:1}
 .input,.select,.textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:var(--fg);outline:none}
 .textarea{min-height:100px;resize:vertical}
 .small-note{opacity:.7;font-size:12px;margin-top:6px}
-.top3{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px}
-.top-card{grid-column:span 4;position:relative;padding:18px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(43,255,136,.15),rgba(43,255,136,.06))}
-.top-rank{position:absolute;top:-10px;left:-10px;background:var(--accent);color:#04120a;font-weight:800;padding:6px 10px;border-radius:999px;border:2px solid #04120a22}
-.crown{margin-left:6px;filter:drop-shadow(0 2px 6px rgba(43,255,136,.5))}
-/* Layout for #1, #2/#3 */
-.top-one { grid-column: 1 / -1; min-height: 200px; position: relative; }
-.top-two-three { grid-column: span 6; min-height: 180px; position: relative; }
-/* Centered crown/placement badge */
-.top-badge{
-  position:absolute;
-  top:-14px;
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--accent);
-  color:#04120a;
-  font-weight:800;
-  padding:8px 14px;
-  border-radius:999px;
-  border:2px solid #04120a22;
-  box-shadow:0 6px 18px rgba(43,255,136,.35);
-}
-.err{padding:10px;border:1px solid #ff9b9b;background:rgba(255,0,0,.08);border-radius:12px;color:#ffd6d6}
-.chaos{animation:chaosShake .2s infinite,hue 6s infinite linear;filter:contrast(1.2) saturate(1.4) blur(1px)}
-@keyframes chaosShake{0%{transform:rotate(-1deg) translate(-3px,-2px) scale(1.02)}50%{transform:rotate(1deg) translate(3px,2px) scale(1.01)}100%{transform:rotate(-1deg) translate(-3px,-2px) scale(1.02)}}
-@keyframes hue{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
 
-/* Centered top area */
-.top3 {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  justify-content: center; /* ensure centered */
-}
+/* Top 3 centered layout */
+.top3{display:flex;gap:24px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
+.top-one,.top-two-three{position:relative;text-align:center;z-index:1;padding-top:38px}
+.top-one{min-width:320px;max-width:420px;flex:0 1 420px}
+.top-two-three{min-width:260px;max-width:340px;flex:0 1 340px}
+.top-badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#04120a;font-weight:800;padding:8px 14px;border-radius:999px;border:2px solid #04120a22;box-shadow:0 6px 18px rgba(43,255,136,.35);z-index:3}
+.prize-tag{position:absolute;right:10px;bottom:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.08);border:1px solid var(--border);font-weight:600;font-size:13px;backdrop-filter:blur(10px);z-index:2}
 
-/* #1 big card (centered) */
-.top-one {
-  min-width: 320px;
-  max-width: 420px;
-  flex: 0 1 420px;  /* prefers 420px but wraps nicely */
-  text-align: center;
-  position: relative;
-}
+/* Glow */
+.glow{overflow:visible;isolation:isolate;position:relative}
+.glow::before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle at 50% 50%, rgba(43,255,136,0.20) 0%, rgba(43,255,136,0.08) 30%, transparent 65%);animation:pulse 7s ease-in-out infinite;z-index:0;pointer-events:none}
+@keyframes pulse{0%{transform:scale(0.95) rotate(0deg);opacity:.85}50%{transform:scale(1.05) rotate(10deg);opacity:1}100%{transform:scale(0.95) rotate(0deg);opacity:.85}}
 
-/* #2 and #3 (side by side, centered) */
-.top-two-three {
-  min-width: 260px;
-  max-width: 340px;
-  flex: 0 1 340px;
-  text-align: center;
-  position: relative;
-}
+/* Countdown */
+.countdown{margin-top:8px;display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,0.06);backdrop-filter:blur(10px)}
+.countdown-label{opacity:.85;font-weight:600}
+.countdown-time{font-weight:900;letter-spacing:.5px}
 
-/* Centered crown/placement badge */
-.top-badge {
-  position: absolute;
-  top: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--accent);
-  color: #04120a;
-  font-weight: 800;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 2px solid #04120a22;
-  box-shadow: 0 6px 18px rgba(43,255,136,.35);
-}
+/* Prize chips */
+.chip{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,0.06);backdrop-filter:blur(10px);font-weight:600}
 
-/* Optional animated glow for Top 3 — remove 'glow' class to disable */
-.glow {
-  overflow: hidden;
-  isolation: isolate;
-}
-.glow::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(43,255,136,0.20) 0%, rgba(43,255,136,0.08) 25%, transparent 60%);
-  animation: pulse 7s ease-in-out infinite;
-  z-index: -1;
-}
-@keyframes pulse {
-  0%   { transform: scale(0.95) rotate(0deg);   opacity: 0.8; }
-  50%  { transform: scale(1.05) rotate(10deg);  opacity: 1;   }
-  100% { transform: scale(0.95) rotate(0deg);   opacity: 0.8; }
-}
-/* Centered top area */
-.top3 {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* #1 big card (centered) */
-.top-one {
-  min-width: 320px;
-  max-width: 420px;
-  flex: 0 1 420px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-/* #2 and #3 (side by side, centered) */
-.top-two-three {
-  min-width: 260px;
-  max-width: 340px;
-  flex: 0 1 340px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-/* Centered crown/placement badge — make sure it's above everything */
-.top-badge {
-  position: absolute;
-  top: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--accent);
-  color: #04120a;
-  font-weight: 800;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 2px solid #04120a22;
-  box-shadow: 0 6px 18px rgba(43,255,136,.35);
-  z-index: 3;              /* ← ensure visible */
-}
-
-/* Prize tag on each top card */
-.prize-tag{
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid var(--border);
-  font-weight: 600;
-  font-size: 13px;
-  backdrop-filter: blur(10px);
-}
-
-/* Centered top area (unchanged) */
-.top3 {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* Add top padding so the badge fits INSIDE the card */
-.top-one,
-.top-two-three {
-  position: relative;
-  text-align: center;
-  z-index: 1;
-  padding-top: 38px;           /* <-- gives the badge room */
-}
-
-/* Size constraints (keep them if you like the widths) */
-.top-one { min-width: 320px; max-width: 420px; flex: 0 1 420px; }
-.top-two-three { min-width: 260px; max-width: 340px; flex: 0 1 340px; }
-
-/* Badge: no negative offset; sits inside the card now */
-.top-badge {
-  position: absolute;
-  top: 10px;                   /* <-- inside the card */
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--accent);
-  color: #04120a;
-  font-weight: 800;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 2px solid #04120a22;
-  box-shadow: 0 6px 18px rgba(43,255,136,.35);
-  z-index: 3;                  /* above glow */
-}
-
-/* Prize tag */
-.prize-tag{
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid var(--border);
-  font-weight: 600;
-  font-size: 13px;
-  backdrop-filter: blur(10px);
-  z-index: 2;
-}
-
-/* Optional animated glow for Top 3 — keep overflow visible */
-.glow {
-  overflow: visible;
-  isolation: isolate;
-  position: relative;
-}
-.glow::before {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  background: radial-gradient(circle at 50% 50%,
-              rgba(43,255,136,0.20) 0%,
-              rgba(43,255,136,0.08) 30%,
-              transparent 65%);
-  animation: pulse 7s ease-in-out infinite;
-  z-index: 0;                  /* below badge/prize/content */
-  pointer-events: none;
-}
-@keyframes pulse {
-  0%   { transform: scale(0.95) rotate(0deg);   opacity: 0.85; }
-  50%  { transform: scale(1.05) rotate(10deg);  opacity: 1;    }
-  100% { transform: scale(0.95) rotate(0deg);   opacity: 0.85; }
-}
-
-/* Optional: add a little gap below the “Top Wagerers” bar */
-.glass.card + .top3 { margin-top: 8px; }
-
-/* Countdown bar inside the subheader */
-.countdown{
-  margin-top: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(10px);
-}
-.countdown-label{
-  opacity: .85;
-  font-weight: 600;
-}
-.countdown-time{
-  font-weight: 900;
-  letter-spacing: 0.5px;
-}
-
+/* Cookie consent */
+.cookie-bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:min(920px,calc(100% - 24px));display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:rgba(10,14,12,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:50}
+:root[data-theme="light"] .cookie-bar{background:rgba(255,255,255,.75)}
+.cookie-text{flex:1;font-size:14px;line-height:1.35}
+.cookie-actions{display:flex;gap:8px}
