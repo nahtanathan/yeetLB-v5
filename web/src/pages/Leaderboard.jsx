@@ -186,12 +186,12 @@ export default function Leaderboard() {
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             {/* Circular icon area */}
             <div style={{
-              width: 56, height: 56, borderRadius: 16, overflow: 'hidden',
-              background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
-              border: '1px solid var(--border)'
-            }}>
-              <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+  width: 72, height: 72, borderRadius: 16, overflow: 'hidden',
+  background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
+  border: '1px solid var(--border)', padding: 8
+}}>
+  <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+</div>
 
             {/* Title + subtitle */}
             <div style={{ flex: 1, minWidth: 0 }}>
