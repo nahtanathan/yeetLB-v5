@@ -3,24 +3,37 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useKV } from '../components/Shared'
 
-/* -------------------- Theme runtime vars (from Admin → ui KV) -------------------- */
-function ThemeVars({ ui }) {
-  useEffect(() => {
-    if (!ui) return
-    const r = document.documentElement
-    if (ui.bg) r.style.setProperty('--bg', ui.bg)
-    if (ui.fg) r.style.setProperty('--fg', ui.fg)
-    if (ui.primary) r.style.setProperty('--accent', ui.primary)
-    if (ui.accent2) r.style.setProperty('--accent-2', ui.accent2)
-    if (ui.radius) r.style.setProperty('--radius', `${ui.radius}px`)
-    if (ui.borderOpacity != null) {
-      r.style.setProperty('--border', `rgba(255,255,255,${ui.borderOpacity})`)
-    }
-  }, [ui])
+/* ---------- Theme helpers ---------- */
+function getStoredTheme() {
+  return localStorage.getItem('theme') || 'dark'
+}
+function applyTheme(theme) {
+  const root = document.documentElement
+  root.setAttribute('data-theme', theme)
+}
+function ThemeBoot() {
+  useEffect(() => { applyTheme(getStoredTheme()) }, [])
   return null
 }
+function ThemeToggle({ className }) {
+  const [t, setT] = useState(getStoredTheme())
+  useEffect(() => applyTheme(t), [t])
 
-/* ------------------------------ helpers ------------------------------ */
+  const onToggle = () => {
+    const next = t === 'dark' ? 'light' : 'dark'
+    localStorage.setItem('theme', next)
+    setT(next)
+    // Hard refresh to ensure all CSS vars / images / backdrop filters reflow
+    window.location.reload()
+  }
+  return (
+    <button className="btn pill" onClick={onToggle} title="Toggle theme" aria-label="Toggle theme" style={{ fontWeight: 800 }}>
+      {t === 'dark' ? 'Light Mode' : 'Dark Mode'}
+    </button>
+  )
+}
+
+/* ---------- data helpers ---------- */
 const normalize = (arr) =>
   (Array.isArray(arr) ? arr : []).map((d) => ({
     id: d.username,
@@ -75,7 +88,7 @@ function formatRemaining(ms) {
   return d > 0 ? `${d}d ${h}:${m}:${sec}` : `${h}:${m}:${sec}`
 }
 
-/* ------------------------------ page ------------------------------ */
+/* ---------- page ---------- */
 export default function Leaderboard() {
   const [rows, setRows] = useState([])
   const [err, setErr] = useState('')
@@ -86,7 +99,7 @@ export default function Leaderboard() {
   const { data: prizes } = useKV('prizes')
   const { data: countdown } = useKV('countdown')
   const { data: chaos } = useKV('chaos')
-  const { data: reward } = useKV('reward') // NEW
+  const { data: reward } = useKV('reward')
 
   const timeframe = ui?.timeframe ?? '24h'
   const tz = ui?.timezone ?? 'CST'
@@ -151,7 +164,7 @@ export default function Leaderboard() {
   const prizeAt = (i) => (Array.isArray(prizes) && prizes[i] ? prizes[i] : null)
   const fmtPrize = (p) => (!p ? '' : [p.name, p.amount].filter(Boolean).join(' · '))
 
-  // chaos trigger
+  // chaos
   const audioRef = useRef(null)
   const [isChaos, setIsChaos] = useState(false)
   const triggerChaos = async () => {
@@ -167,11 +180,16 @@ export default function Leaderboard() {
     setTimeout(() => setIsChaos(false), Math.max(2000, chaos?.durationMs || 10000))
   }
 
-  // Reward visuals
+  // Reward
   const logo = reward?.logoUrl || '/YEET-logo.png'
   const size = Number(reward?.logoSize ?? 72)
   const pad = Number(reward?.logoPadding ?? 8)
   const safeReqs = Array.isArray(reward?.requirements) ? reward.requirements : []
+
+  // is light?
+  const isLight = (typeof document !== 'undefined') && document.documentElement.getAttribute('data-theme') === 'light'
+  // elevate contrast for light mode (stronger borders & text)
+  const lightBoost = isLight ? { opacity: 1, filter: 'none' } : null
 
   return (
     <div
@@ -181,14 +199,29 @@ export default function Leaderboard() {
         '--flash-intensity': `${Math.min(1, (chaos?.intensity || 1) * 0.6)}`
       }}
     >
-      <ThemeVars ui={ui} />
+      <ThemeBoot />
 
-      {/* subheader & big timer */}
-      <div className="glass card subheader">
-        <h2 className="title">Top Wagerers</h2>
-        <div className="small-note">Live from Yeet API · Timeframe: {timeframe} · TZ: {tz}</div>
+      {/* header bar with theme toggle */}
+      <div className="header glass" style={{ marginBottom: 16, alignItems: 'center' }}>
+        <div>
+          <div style={{ fontWeight: 900, fontSize: 20 }}>{ui?.title || 'Yeet Leaderboard'}</div>
+          <div className="small-note">{ui?.subtitle || timeframe}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a className="btn pill" href="/">Leaderboard</a>
+          <a className="btn pill" href="/admin">Admin</a>
+          <ThemeToggle />
+        </div>
+      </div>
+
+      {/* subheader & timer */}
+      <div className="glass card subheader" style={lightBoost}>
+        <h2 className="title" style={{ margin: 0, opacity: 1 }}>Top Wagerers</h2>
+        <div className="small-note" style={{ opacity: isLight ? .9 : .7 }}>
+          Live from Yeet API · Timeframe: {timeframe} · TZ: {tz}
+        </div>
         {remainingMs !== null && (
-          <div className="timer-pill">
+          <div className="timer-pill" style={{ opacity: 1 }}>
             <span className="timer-icon">⏳</span>
             <span className="timer-label">{countdown?.label || 'Ends in'}</span>
             <span className="timer-value">{formatRemaining(remainingMs)}</span>
@@ -198,10 +231,8 @@ export default function Leaderboard() {
 
       {/* Reward / Promo Card */}
       {reward?.enabled && (
-        <div className="glass card" style={{ marginBottom: 16, padding: 18 }}>
-          {/* Top row */}
+        <div className="glass card" style={{ marginBottom: 16, padding: 18, ...lightBoost }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {/* Logo bubble */}
             <div style={{
               width: size, height: size, borderRadius: 16, overflow: 'hidden',
               background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
@@ -209,39 +240,22 @@ export default function Leaderboard() {
             }}>
               <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-
-            {/* Title + subtitle */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: .2 }}>
-                {reward.title || '$10 Free Balance'}
-              </div>
-              <div className="small-note" style={{ opacity: .9 }}>
-                {reward.subtitle || 'Claim a free $10 on-site balance'}
-              </div>
+              <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: .2 }}>{reward.title || '$10 Free Balance'}</div>
+              <div className="small-note" style={{ opacity: .9 }}>{reward.subtitle || 'Claim a free $10 on-site balance'}</div>
             </div>
-
-            {/* Frequency pill + copy */}
             <div className="pill" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700 }}>
-                {reward.frequencyLabel || 'DAILY'}
-              </span>
+              <span style={{ fontSize: 12, fontWeight: 700 }}>{reward.frequencyLabel || 'DAILY'}</span>
               {reward.copyText && (
-                <button
-                  className="btn"
-                  onClick={() => navigator.clipboard.writeText(reward.copyText)}
-                  title="Copy"
-                  style={{ padding: '4px 6px' }}
-                >
+                <button className="btn" onClick={() => navigator.clipboard.writeText(reward.copyText)} title="Copy" style={{ padding: '4px 6px' }}>
                   📋
                 </button>
               )}
             </div>
           </div>
 
-          {/* Divider */}
           <div className="section-divider" />
 
-          {/* Checklist */}
           {safeReqs.length > 0 && (
             <>
               <div style={{ fontWeight: 800, marginBottom: 10 }}>How to claim this reward:</div>
@@ -256,15 +270,9 @@ export default function Leaderboard() {
             </>
           )}
 
-          {/* CTA */}
           <div style={{ marginTop: 16 }}>
-            <a
-              className="btn accent"
-              href={reward?.ctaHref || '#'}
-              target={reward?.ctaTarget || '_blank'}
-              rel="noreferrer"
-              style={{ width: '100%', display: 'inline-block', textAlign: 'center', fontWeight: 800 }}
-            >
+            <a className="btn accent" href={reward?.ctaHref || '#'} target={reward?.ctaTarget || '_blank'} rel="noreferrer"
+               style={{ width: '100%', display: 'inline-block', textAlign: 'center', fontWeight: 800 }}>
               {reward?.ctaLabel || 'REDEEM REWARD'}
             </a>
           </div>
@@ -275,10 +283,8 @@ export default function Leaderboard() {
       {top1.length > 0 && (
         <div className="top3" style={{ justifyContent: 'center' }}>
           {top1.map((r) => (
-            <div key={r.id || r.username} className="hero-card glass glow">
-              <div className="mega-badge">
-                <span className="rank">#1</span> <span className="crown">👑</span>
-              </div>
+            <div key={r.id || r.username} className="hero-card glass glow" style={lightBoost}>
+              <div className="mega-badge"><span className="rank">#1</span> <span className="crown">👑</span></div>
               {prizeAt(0) && (
                 <div className="prize-ribbon">
                   <span className="ribbon-icon">🏆</span>
@@ -297,13 +303,11 @@ export default function Leaderboard() {
       )}
 
       {/* #2 & #3 */}
-      {top2and3.length > 0 && (
+      {rows.slice(1,3).length > 0 && (
         <div className="top3" style={{ justifyContent: 'center' }}>
-          {top2and3.map((r, i) => (
-            <div key={r.id || r.username} className="hero-card small glass glow">
-              <div className="mega-badge sm">
-                <span className="rank">#{i + 2}</span> <span className="crown">👑</span>
-              </div>
+          {rows.slice(1,3).map((r, i) => (
+            <div key={r.id || r.username} className="hero-card small glass glow" style={lightBoost}>
+              <div className="mega-badge sm"><span className="rank">#{i + 2}</span> <span className="crown">👑</span></div>
               {prizeAt(i + 1) && (
                 <div className="prize-ribbon sm">
                   <span className="ribbon-icon">🎁</span>
@@ -321,9 +325,9 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {/* prize chips row */}
+      {/* prize chips */}
       {Array.isArray(prizes) && prizes.length > 0 && (
-        <div className="glass card" style={{ marginBottom: 24 }}>
+        <div className="glass card" style={{ marginBottom: 24, ...lightBoost }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
             {prizes.map((p, idx) => (
               <div key={idx} className="chip">
@@ -334,8 +338,8 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {/* rest table */}
-      <div className="glass card">
+      {/* table */}
+      <div className="glass card" style={lightBoost}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ margin: '0 0 4px' }}>Leaderboard</h2>
@@ -345,7 +349,7 @@ export default function Leaderboard() {
         {rows.length === 0 && err && <div className="err" style={{ marginTop: 10 }}>{err}</div>}
         <table style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ textAlign: 'left', opacity: .7 }}>
+            <tr style={{ textAlign: 'left', opacity: .9 }}>
               <th style={{ padding: '8px 6px' }}>#</th>
               <th style={{ padding: '8px 6px' }}>User</th>
               <th style={{ padding: '8px 6px' }}>Volume</th>
@@ -369,15 +373,11 @@ export default function Leaderboard() {
         </table>
       </div>
 
-      {/* chaos trigger */}
+      {/* chaos */}
       {chaos?.enabled && (
-        <div className="glass card" style={{ marginTop: 24, textAlign: 'center' }}>
+        <div className="glass card" style={{ marginTop: 24, textAlign: 'center', ...lightBoost }}>
           <audio ref={audioRef} src={chaos?.songUrl || '/chaos.wav'} preload="auto" />
-          <button
-            className="btn"
-            style={{ background: 'rgba(255,0,0,.25)', borderColor: 'rgba(255,0,0,.5)', fontWeight: 800, fontSize: 18 }}
-            onClick={triggerChaos}
-          >
+          <button className="btn" style={{ background: 'rgba(255,0,0,.25)', borderColor: 'rgba(255,0,0,.5)', fontWeight: 800, fontSize: 18 }} onClick={triggerChaos}>
             🚫 Don’t press this
           </button>
         </div>
