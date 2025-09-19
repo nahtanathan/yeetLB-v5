@@ -34,6 +34,9 @@ export default function Admin(){
   const integrationsKV = useKV('integrations')
   const countdownKV    = useKV('countdown')
 
+  // NEW: reward card KV
+  const rewardKV       = useKV('reward')
+
   /* Local editable state */
   const [ui,setUI] = useState(null)
   const [prizes,setPrizes] = useState([])
@@ -41,11 +44,32 @@ export default function Admin(){
   const [integrations,setIntegrations] = useState({yeetApis:[]})
   const [countdown,setCountdown] = useState({enabled:false,label:'Ends in',endAt:''})
 
+  // reward local state
+  const [reward,setReward] = useState({
+    enabled:true,
+    logoUrl:'/YEET-logo.png',
+    title:'$10 Free Balance',
+    subtitle:'Claim a free $10 on-site balance',
+    frequencyLabel:'DAILY',
+    copyText:'',             // optional clipboard text
+    requirements:[
+      { text:'Deposit $20+' },
+      { text:'Wager $100+' },
+      { text:'Open a ticket to claim your prize!' }
+    ],
+    ctaLabel:'REDEEM REWARD',
+    ctaHref:'#',
+    ctaTarget:'_blank'
+  })
+
   useEffect(()=>{ if (uiKV.data) setUI(uiKV.data) },[uiKV.data])
   useEffect(()=>{ if (Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
   useEffect(()=>{ if (chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
   useEffect(()=>{ if (integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
   useEffect(()=>{ if (countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
+
+  // hydrate reward
+  useEffect(()=>{ if (rewardKV.data) setReward(rewardKV.data) },[rewardKV.data])
 
   const saveAll = async ()=>{
     await uiKV.save(ui||{})
@@ -53,6 +77,7 @@ export default function Admin(){
     await chaosKV.save(chaos||{})
     await integrationsKV.save(integrations||{yeetApis:[]})
     await countdownKV.save(countdown||{enabled:false})
+    await rewardKV.save(reward||{})
     alert('Saved to Supabase ✅')
   }
 
@@ -85,6 +110,15 @@ export default function Admin(){
     const n=(integrations.yeetApis||[]).filter((_,idx)=>idx!==i)
     setIntegrations({...integrations, yeetApis:n})
   }
+
+  // reward checklist helpers
+  const addReq = ()=> setReward({...reward, requirements:[...(reward.requirements||[]), {text:''}]})
+  const updateReq = (i,v)=> {
+    const n=(reward.requirements||[]).slice()
+    n[i]={...n[i], text:v}
+    setReward({...reward, requirements:n})
+  }
+  const removeReq = (i)=> setReward({...reward, requirements:(reward.requirements||[]).filter((_,idx)=>idx!==i)})
 
   /* -------- Login screen -------- */
   if (!session){
@@ -221,6 +255,78 @@ export default function Admin(){
           </div>
         </div>
 
+        {/* Reward Card Config */}
+        <div className='glass card' style={{gridColumn:'span 12'}}>
+          <h3>Reward Card</h3>
+          <label style={{display:'block',marginBottom:8}}>
+            <input type='checkbox' checked={!!reward.enabled}
+                   onChange={e=>setReward({...reward,enabled:e.target.checked})}/> Enabled
+          </label>
+
+          <div style={{display:'grid',gap:8, maxWidth:800}}>
+            <label>Logo URL
+              <input className='input' placeholder='/YEET-logo.png' value={reward.logoUrl||''}
+                     onChange={e=>setReward({...reward,logoUrl:e.target.value})}/>
+            </label>
+            <label>Title
+              <input className='input' value={reward.title||''}
+                     onChange={e=>setReward({...reward,title:e.target.value})}/>
+            </label>
+            <label>Subtitle
+              <input className='input' value={reward.subtitle||''}
+                     onChange={e=>setReward({...reward,subtitle:e.target.value})}/>
+            </label>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <label>Frequency label
+                <input className='input' placeholder='DAILY'
+                       value={reward.frequencyLabel||''}
+                       onChange={e=>setReward({...reward,frequencyLabel:e.target.value})}/>
+              </label>
+              <label>Copy text (optional)
+                <input className='input' placeholder='RAZED2025'
+                       value={reward.copyText||''}
+                       onChange={e=>setReward({...reward,copyText:e.target.value})}/>
+              </label>
+            </div>
+
+            <div>
+              <div style={{fontWeight:700, margin:'8px 0'}}>Checklist</div>
+              <div style={{display:'grid',gap:8}}>
+                {(reward.requirements||[]).map((r,i)=>(
+                  <div key={i} className='glass' style={{padding:10, display:'grid', gap:6}}>
+                    <input className='input' placeholder='Requirement text' value={r.text||''}
+                           onChange={e=>updateReq(i, e.target.value)}/>
+                    <button className='btn' onClick={()=>removeReq(i)}>Remove</button>
+                  </div>
+                ))}
+                <button className='btn' onClick={addReq}>+ Add Requirement</button>
+              </div>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <label>CTA Label
+                <input className='input' placeholder='REDEEM REWARD'
+                       value={reward.ctaLabel||''}
+                       onChange={e=>setReward({...reward,ctaLabel:e.target.value})}/>
+              </label>
+              <label>CTA Link
+                <input className='input' placeholder='https://...'
+                       value={reward.ctaHref||''}
+                       onChange={e=>setReward({...reward,ctaHref:e.target.value})}/>
+              </label>
+            </div>
+
+            <label>CTA Target
+              <select className='select' value={reward.ctaTarget||'_blank'}
+                      onChange={e=>setReward({...reward,ctaTarget:e.target.value})}>
+                <option value='_self'>_self</option>
+                <option value='_blank'>_blank</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
         {/* Chaos (settings only) */}
         <div className='glass card' style={{gridColumn:'span 12'}}>
           <h3>Chaos Button (settings only)</h3>
@@ -228,6 +334,9 @@ export default function Admin(){
             <input type='checkbox' checked={!!chaos?.enabled}
                    onChange={e=>setChaos({...chaos,enabled:e.target.checked})}/> Enabled
           </label>
+          <div className='small-note' style={{marginTop:10}}>
+            The red “Don’t press this” trigger appears at the bottom of the public Leaderboard page.
+          </div>
           <div style={{display:'grid',gap:8,maxWidth:600}}>
             <label>Song URL
               <input className='input' value={chaos?.songUrl||''}
@@ -241,9 +350,6 @@ export default function Admin(){
               <input className='input' type='number' step='0.1' value={chaos?.intensity||1}
                      onChange={e=>setChaos({...chaos,intensity:Number(e.target.value)})}/>
             </label>
-          </div>
-          <div className='small-note' style={{marginTop:10}}>
-            The red “Don’t press this” trigger now appears at the bottom of the public Leaderboard page.
           </div>
         </div>
 
