@@ -6,8 +6,8 @@ import { useKV } from '../components/Shared'
 export default function Admin(){
   /* -------- Auth -------- */
   const [session,setSession]=useState(null)
-  const [email,setEmail]=useState(''); 
-  const [password,setPassword]=useState(''); 
+  const [email,setEmail]=useState('')
+  const [password,setPassword]=useState('')
   const [authError,setAuthError]=useState('')
 
   useEffect(()=>{
@@ -30,28 +30,33 @@ export default function Admin(){
   /* -------- KV stores -------- */
   const uiKV           = useKV('ui')
   const prizesKV       = useKV('prizes')
-  const chaosKV        = useKV('chaos')          // settings only; trigger lives on Leaderboard
+  const chaosKV        = useKV('chaos')
   const integrationsKV = useKV('integrations')
   const countdownKV    = useKV('countdown')
+  const rewardKV       = useKV('reward')   // NEW
 
-  // NEW: reward card KV
-  const rewardKV       = useKV('reward')
-
-  /* Local editable state */
-  const [ui,setUI] = useState(null)
+  /* -------- Local state -------- */
+  const [ui,setUI] = useState({
+    title:'', subtitle:'', timeframe:'24h', timezone:'CST',
+    theme:'dark',
+    // NEW theme knobs (premium palette)
+    bg:'#0B1020', fg:'#E7ECF5', primary:'#6DA8FF', accent2:'#56E1FF',
+    borderOpacity:0.12, radius:16,
+    backgroundImage:''
+  })
   const [prizes,setPrizes] = useState([])
   const [chaos,setChaos] = useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
   const [integrations,setIntegrations] = useState({yeetApis:[]})
   const [countdown,setCountdown] = useState({enabled:false,label:'Ends in',endAt:''})
-
-  // reward local state
   const [reward,setReward] = useState({
     enabled:true,
     logoUrl:'/YEET-logo.png',
+    logoSize:72,
+    logoPadding:8,
     title:'$10 Free Balance',
     subtitle:'Claim a free $10 on-site balance',
     frequencyLabel:'DAILY',
-    copyText:'',             // optional clipboard text
+    copyText:'',
     requirements:[
       { text:'Deposit $20+' },
       { text:'Wager $100+' },
@@ -62,14 +67,13 @@ export default function Admin(){
     ctaTarget:'_blank'
   })
 
-  useEffect(()=>{ if (uiKV.data) setUI(uiKV.data) },[uiKV.data])
+  // hydrate from KV
+  useEffect(()=>{ if (uiKV.data) setUI({ ...ui, ...uiKV.data }) },[uiKV.data])
   useEffect(()=>{ if (Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
   useEffect(()=>{ if (chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
   useEffect(()=>{ if (integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
   useEffect(()=>{ if (countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
-
-  // hydrate reward
-  useEffect(()=>{ if (rewardKV.data) setReward(rewardKV.data) },[rewardKV.data])
+  useEffect(()=>{ if (rewardKV.data) setReward({ ...reward, ...rewardKV.data }) },[rewardKV.data])
 
   const saveAll = async ()=>{
     await uiKV.save(ui||{})
@@ -111,7 +115,7 @@ export default function Admin(){
     setIntegrations({...integrations, yeetApis:n})
   }
 
-  // reward checklist helpers
+  // reward helpers
   const addReq = ()=> setReward({...reward, requirements:[...(reward.requirements||[]), {text:''}]})
   const updateReq = (i,v)=> {
     const n=(reward.requirements||[]).slice()
@@ -176,6 +180,32 @@ export default function Admin(){
             <label>Background Image URL
               <input className='input' value={ui?.backgroundImage||''} onChange={e=>setUI({...ui,backgroundImage:e.target.value})}/>
             </label>
+
+            <div className='section-divider' />
+
+            <div style={{fontWeight:700}}>Premium Palette</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(2, minmax(0,1fr))',gap:8}}>
+              <label>Background
+                <input className='input' value={ui?.bg||''} onChange={e=>setUI({...ui,bg:e.target.value})}/>
+              </label>
+              <label>Foreground
+                <input className='input' value={ui?.fg||''} onChange={e=>setUI({...ui,fg:e.target.value})}/>
+              </label>
+              <label>Primary / Accent
+                <input className='input' value={ui?.primary||''} onChange={e=>setUI({...ui,primary:e.target.value})}/>
+              </label>
+              <label>Accent 2
+                <input className='input' value={ui?.accent2||''} onChange={e=>setUI({...ui,accent2:e.target.value})}/>
+              </label>
+              <label>Border Opacity (0–.3)
+                <input className='input' type='number' step='0.01' value={ui?.borderOpacity ?? 0.12}
+                       onChange={e=>setUI({...ui,borderOpacity:Number(e.target.value)})}/>
+              </label>
+              <label>Radius (px)
+                <input className='input' type='number' value={ui?.radius ?? 16}
+                       onChange={e=>setUI({...ui,radius:Number(e.target.value)})}/>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -263,11 +293,22 @@ export default function Admin(){
                    onChange={e=>setReward({...reward,enabled:e.target.checked})}/> Enabled
           </label>
 
-          <div style={{display:'grid',gap:8, maxWidth:800}}>
-            <label>Logo URL
-              <input className='input' placeholder='/YEET-logo.png' value={reward.logoUrl||''}
-                     onChange={e=>setReward({...reward,logoUrl:e.target.value})}/>
-            </label>
+          <div style={{display:'grid',gap:8, maxWidth:900}}>
+            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:8}}>
+              <label>Logo URL
+                <input className='input' placeholder='/YEET-logo.png' value={reward.logoUrl||''}
+                       onChange={e=>setReward({...reward,logoUrl:e.target.value})}/>
+              </label>
+              <label>Logo Size (px)
+                <input className='input' type='number' value={Number(reward.logoSize ?? 72)}
+                       onChange={e=>setReward({...reward,logoSize:Number(e.target.value)})}/>
+              </label>
+              <label>Logo Padding (px)
+                <input className='input' type='number' value={Number(reward.logoPadding ?? 8)}
+                       onChange={e=>setReward({...reward,logoPadding:Number(e.target.value)})}/>
+              </label>
+            </div>
+
             <label>Title
               <input className='input' value={reward.title||''}
                      onChange={e=>setReward({...reward,title:e.target.value})}/>
@@ -304,7 +345,7 @@ export default function Admin(){
               </div>
             </div>
 
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
               <label>CTA Label
                 <input className='input' placeholder='REDEEM REWARD'
                        value={reward.ctaLabel||''}
@@ -315,15 +356,14 @@ export default function Admin(){
                        value={reward.ctaHref||''}
                        onChange={e=>setReward({...reward,ctaHref:e.target.value})}/>
               </label>
+              <label>CTA Target
+                <select className='select' value={reward.ctaTarget||'_blank'}
+                        onChange={e=>setReward({...reward,ctaTarget:e.target.value})}>
+                  <option value='_self'>_self</option>
+                  <option value='_blank'>_blank</option>
+                </select>
+              </label>
             </div>
-
-            <label>CTA Target
-              <select className='select' value={reward.ctaTarget||'_blank'}
-                      onChange={e=>setReward({...reward,ctaTarget:e.target.value})}>
-                <option value='_self'>_self</option>
-                <option value='_blank'>_blank</option>
-              </select>
-            </label>
           </div>
         </div>
 
@@ -334,9 +374,6 @@ export default function Admin(){
             <input type='checkbox' checked={!!chaos?.enabled}
                    onChange={e=>setChaos({...chaos,enabled:e.target.checked})}/> Enabled
           </label>
-          <div className='small-note' style={{marginTop:10}}>
-            The red “Don’t press this” trigger appears at the bottom of the public Leaderboard page.
-          </div>
           <div style={{display:'grid',gap:8,maxWidth:600}}>
             <label>Song URL
               <input className='input' value={chaos?.songUrl||''}
@@ -350,6 +387,9 @@ export default function Admin(){
               <input className='input' type='number' step='0.1' value={chaos?.intensity||1}
                      onChange={e=>setChaos({...chaos,intensity:Number(e.target.value)})}/>
             </label>
+          </div>
+          <div className='small-note' style={{marginTop:10}}>
+            The red “Don’t press this” trigger appears on the public Leaderboard page.
           </div>
         </div>
 
