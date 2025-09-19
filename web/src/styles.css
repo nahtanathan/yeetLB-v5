@@ -1,22 +1,35 @@
-/* =========================
-   Premium Dark/Light Theme
-   ========================= */
+/* =========================================
+   Premium Theme — Dark + Bold Light
+   ========================================= */
+
+/* ---------- Dark (default) ---------- */
 :root{
   --bg:#0B1020;
   --fg:#E7ECF5;
+  --muted:#566072;
   --glass:rgba(255,255,255,.06);
   --border:rgba(255,255,255,.12);
-  --accent:#6DA8FF;       /* primary electric blue */
-  --accent-2:#56E1FF;     /* cyan edge */
+  --accent:#6DA8FF;           /* electric blue */
+  --accent-2:#56E1FF;         /* cyan edge */
   --radius:16px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --chip-bg:rgba(255,255,255,.06);
+  --table-head-opacity:.7;
 }
+
+/* ---------- Light (bold, legible) ---------- */
 :root[data-theme="light"]{
-  --bg:#F6F8FC;
-  --fg:#0D1424;
-  --glass:rgba(255,255,255,.66);
-  --border:rgba(0,0,0,.12);
-  --accent:#2A82FF;
+  --bg:#F7FAFE;               /* bright canvas */
+  --fg:#0D1424;               /* inky text */
+  --muted:#455066;
+  --glass:rgba(255,255,255,.92);  /* near-solid surface */
+  --border:rgba(10,25,60,.18);    /* stronger border */
+  --accent:#2A82FF;           /* vivid primary */
   --accent-2:#2FD3FF;
+  --radius:16px;
+  --shadow:0 10px 22px rgba(16,30,60,.12);
+  --chip-bg:rgba(16,30,60,.06);
+  --table-head-opacity:.95;   /* clearer headers */
 }
 
 *{box-sizing:border-box}
@@ -29,245 +42,203 @@ body{
   transition:background-color .3s,color .3s;
 }
 
-/* =========================
-   Background & Overlays
-   ========================= */
-.bg-image{
-  position:fixed; inset:0; background-size:cover; filter:brightness(.6); z-index:-2;
-}
+/* ---------- Optional background overlay (subtle; no darkness in light) ---------- */
+.bg-image{position:fixed;inset:0;background-size:cover;filter:brightness(.75);z-index:-2}
+:root[data-theme="light"] .bg-image{filter:none}
+
 .bg-overlay{
-  position:fixed; inset:0; z-index:-1;
-  /* subtle blue vignette, no green */
+  position:fixed;inset:0;z-index:-1;
   background:
-    radial-gradient(80% 60% at 50% 0%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 60%),
+    radial-gradient(80% 60% at 50% 0%,
+      color-mix(in oklab, var(--accent) 14%, transparent),
+      transparent 60%),
     linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.35));
 }
+:root[data-theme="light"] .bg-overlay{
+  background:
+    radial-gradient(90% 70% at 50% -10%,
+      color-mix(in oklab, var(--accent) 12%, white 0%),
+      transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,.0), rgba(255,255,255,.0));
+}
 
-/* =========================
-   Layout Primitives
-   ========================= */
+/* ---------- Layout ---------- */
 .container{max-width:1200px;margin:0 auto;padding:24px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{padding:16px}
+a{color:inherit;text-decoration:none;opacity:.9} a:hover{opacity:1}
+
+/* ---------- Glass Surfaces ---------- */
 .glass{
   background:var(--glass);
   border:1px solid var(--border);
   backdrop-filter:blur(16px) saturate(140%);
   -webkit-backdrop-filter:blur(16px) saturate(140%);
   border-radius:18px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  box-shadow:var(--shadow);
 }
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-.card{padding:16px}
-a{color:inherit;text-decoration:none;opacity:.9} a:hover{opacity:1}
 
-/* =========================
-   Buttons & Inputs
-   ========================= */
+/* In light mode, give cards a faint gradient + inner border for crisp edges */
+:root[data-theme="light"] .card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,.96));
+  box-shadow:var(--shadow);
+  border-color:var(--border);
+}
+
+/* ---------- Buttons & Inputs ---------- */
 .btn{
-  padding:12px 16px;
-  border-radius:12px;
-  border:1px solid var(--border);
+  padding:12px 16px;border-radius:12px;border:1px solid var(--border);
   background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  color:var(--fg);
-  cursor:pointer;
-  font-weight:800;
+  color:var(--fg);cursor:pointer;font-weight:800;
   transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
 }
-.btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 10px 30px color-mix(in oklab, var(--accent) 18%, transparent);
-  border-color:color-mix(in oklab, var(--accent) 60%, transparent);
-}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px color-mix(in oklab, var(--accent) 18%, transparent);border-color:color-mix(in oklab, var(--accent) 60%, transparent)}
 .btn.accent{
   border-color:color-mix(in oklab, var(--accent) 45%, transparent);
   background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 25%, transparent), color-mix(in oklab, var(--accent) 10%, transparent));
-  color:var(--fg);
 }
+:root[data-theme="light"] .btn{
+  background:linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,.96));
+}
+:root[data-theme="light"] .btn.accent{
+  background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 22%, white 78%), color-mix(in oklab, var(--accent) 10%, white 90%));
+}
+
 .input,.select,.textarea{
-  width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
-  background:rgba(255,255,255,.05); color:var(--fg); outline:none;
+  width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.05);color:var(--fg);outline:none;
+}
+:root[data-theme="light"] .input,
+:root[data-theme="light"] .select,
+:root[data-theme="light"] .textarea{
+  background:rgba(255,255,255,1);
+  border-color:var(--border);
 }
 .textarea{min-height:100px;resize:vertical}
-.small-note{opacity:.7;font-size:12px;margin-top:6px}
+.small-note{opacity:.75;font-size:12px;margin-top:6px}
+:root[data-theme="light"] .small-note{opacity:.9}
 
-/* =========================
-   Subheader + Timer
-   ========================= */
+/* ---------- Subheader + Timer ---------- */
 .subheader{text-align:center;margin-bottom:24px}
 .subheader .title{margin:0 0 4px}
 .timer-pill{
-  margin:10px auto 0;
-  display:inline-flex; align-items:center; gap:10px;
-  padding:12px 16px;
-  border-radius:999px;
-  border:1px solid var(--border);
+  margin:10px auto 0;display:inline-flex;align-items:center;gap:10px;
+  padding:12px 16px;border-radius:999px;border:1px solid var(--border);
   background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 18%, transparent), color-mix(in oklab, var(--accent) 8%, transparent));
-  box-shadow:0 10px 30px color-mix(in oklab, var(--accent) 25%, transparent), inset 0 0 0 1px rgba(0,0,0,.15);
-  font-weight:900; letter-spacing:.5px;
+  box-shadow:0 10px 30px color-mix(in oklab, var(--accent) 25%, transparent), inset 0 0 0 1px rgba(0,0,0,.12);
+  font-weight:900;letter-spacing:.5px;
+}
+:root[data-theme="light"] .timer-pill{
+  background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 14%, white 86%), color-mix(in oklab, var(--accent) 6%, white 94%));
+  box-shadow:0 6px 18px rgba(16,30,60,.12), inset 0 0 0 1px rgba(255,255,255,.7);
 }
 .timer-icon{filter:drop-shadow(0 0 8px color-mix(in oklab, var(--accent) 55%, transparent))}
-.timer-label{opacity:.95}
 .timer-value{padding-left:6px}
 
-/* =========================
-   Top 3 & Hero Cards
-   ========================= */
+/* ---------- Top 3 & Hero Cards ---------- */
 .top3{display:flex;gap:28px;margin-bottom:28px;flex-wrap:wrap;justify-content:center}
-
 .hero-card{
-  position:relative;
-  width:min(540px, 95vw);
-  min-width:320px;
-  border-radius:22px;
-  padding:56px 20px 64px; /* room for badge & ribbon */
-  text-align:center;
-  overflow:visible;
-  isolation:isolate;
+  position:relative;width:min(540px,95vw);min-width:320px;border-radius:22px;
+  padding:56px 20px 64px;text-align:center;overflow:visible;isolation:isolate;
 }
-.hero-card.small{
-  width:min(420px, 95vw);
-  padding:54px 18px 58px;
-}
+.hero-card.small{width:min(420px,95vw);padding:54px 18px 58px}
 
-/* Aura glow — blue only */
+/* Blue aura only */
 .glow{overflow:visible;isolation:isolate;position:relative}
 .glow::before{
-  content:""; position:absolute; inset:-30%;
+  content:"";position:absolute;inset:-30%;
   background:radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--accent) 22%, transparent) 0%, color-mix(in oklab, var(--accent) 10%, transparent) 32%, transparent 65%);
-  animation:pulse 7s ease-in-out infinite;
-  z-index:0; pointer-events:none;
+  animation:pulse 7s ease-in-out infinite;z-index:0;pointer-events:none;
 }
-@keyframes pulse{
-  0%{transform:scale(0.95) rotate(0deg);opacity:.85}
-  50%{transform:scale(1.05) rotate(10deg);opacity:1}
-  100%{transform:scale(0.95) rotate(0deg);opacity:.85}
-}
+@keyframes pulse{0%{transform:scale(.95);opacity:.85}50%{transform:scale(1.05);opacity:1}100%{transform:scale(.95);opacity:.85}}
 
-/* Rank badge (blue gradient) */
+/* Rank badge (dark+light) */
 .mega-badge{
-  position:absolute; top:-18px; left:50%; transform:translateX(-50%);
-  display:inline-flex; align-items:center; gap:10px;
-  padding:12px 18px;
-  border-radius:999px;
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:999px;
   background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 95%, white 5%), color-mix(in oklab, var(--accent) 80%, black 0%));
-  color:#0A1020; font-weight:900; font-size:22px;
-  border:2px solid #04102022;
+  color:#0A1020;font-weight:900;font-size:22px;border:2px solid #04102022;
   box-shadow:0 12px 28px color-mix(in oklab, var(--accent) 45%, transparent), 0 0 0 4px color-mix(in oklab, var(--accent) 20%, transparent);
   z-index:3;
 }
-.mega-badge.sm{font-size:18px; padding:10px 16px; top:-16px}
-.mega-badge .rank{filter:drop-shadow(0 1px 0 rgba(0,0,0,.2))}
-.mega-badge .crown{filter:drop-shadow(0 0 10px rgba(255,255,0,.7))}
-
-/* Prize ribbon */
-.prize-ribbon{
-  position:absolute; right:14px; bottom:14px;
-  display:inline-flex; align-items:center; gap:8px;
-  padding:10px 12px;
-  border-radius:14px;
-  background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
-  border:1px solid var(--border);
-  font-weight:800; font-size:14px;
-  backdrop-filter:blur(10px);
-  z-index:2;
-}
-.prize-ribbon.sm{font-size:13px; padding:8px 10px}
-.ribbon-icon{filter:drop-shadow(0 1px 6px rgba(0,0,0,.3))}
-.ribbon-text{white-space:nowrap}
+.mega-badge.sm{font-size:18px;padding:10px 16px;top:-16px}
+.mega-badge .crown{filter:drop-shadow(0 0 10px rgba(255,215,0,.7))}
 
 /* Hero content */
-.hero-inner{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:12px}
-.tier-img-lg{height:36px; border-radius:8px; opacity:.95}
-.tier-img-sm{height:28px; border-radius:6px; opacity:.95}
-.handle-lg{font-size:28px; font-weight:900; color:var(--accent)}
-.handle-sm{font-size:20px; font-weight:800; color:var(--accent)}
+.hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tier-img-lg{height:36px;border-radius:8px;opacity:.95}
+.tier-img-sm{height:28px;border-radius:6px;opacity:.95}
+.handle-lg{font-size:28px;font-weight:900;color:var(--accent)}
+.handle-sm{font-size:20px;font-weight:800;color:var(--accent)}
 .metric-label{opacity:.85}
-.metric-lg{font-size:40px; font-weight:900}
-.metric-sm{font-size:30px; font-weight:900}
+:root[data-theme="light"] .metric-label{opacity:.9}
+.metric-lg{font-size:40px;font-weight:900}
+.metric-sm{font-size:30px;font-weight:900}
 
 /* Prize chips row */
 .chip{
-  padding:8px 12px; border-radius:999px; border:1px solid var(--border);
-  background:rgba(255,255,255,.06); backdrop-filter:blur(10px); font-weight:600
+  padding:8px 12px;border-radius:999px;border:1px solid var(--border);
+  background:var(--chip-bg);backdrop-filter:blur(10px);font-weight:600
 }
 
-/* =========================
-   Reward Card helpers
-   ========================= */
+/* ---------- Reward Card helpers ---------- */
 .section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0;}
 .pill{
-  padding:8px 12px; border:1px solid var(--border); border-radius:12px;
+  padding:8px 12px;border:1px solid var(--border);border-radius:12px;
   background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 12%, transparent), color-mix(in oklab, var(--accent) 4%, transparent));
-  font-weight:700; letter-spacing:.3px;
+  font-weight:700;letter-spacing:.3px;
+}
+:root[data-theme="light"] .pill{
+  background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, white 90%), color-mix(in oklab, var(--accent) 3%, white 97%));
 }
 .check-item{display:flex;align-items:center;gap:10px}
 .check-dot{
-  width:20px; height:20px; border-radius:999px; display:grid; place-items:center;
+  width:20px;height:20px;border-radius:999px;display:grid;place-items:center;
   background:color-mix(in oklab, var(--accent) 18%, transparent);
-  border:1px solid var(--border); font-size:12px;
+  border:1px solid var(--border);font-size:12px;
+}
+:root[data-theme="light"] .check-dot{
+  background:color-mix(in oklab, var(--accent) 16%, white 84%);
 }
 
-/* =========================
-   Cookie Bar (unchanged)
-   ========================= */
+/* ---------- Table ---------- */
+table{width:100%;border-collapse:collapse}
+thead tr{opacity:var(--table-head-opacity)}
+th,td{padding:10px 6px}
+
+/* ---------- Cookie bar ---------- */
 .cookie-bar{
-  position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
-  width:min(920px,calc(100% - 24px)); display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:14px 16px; border-radius:14px; border:1px solid var(--border);
-  background:rgba(10,14,20,.65); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:50;
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+  width:min(920px,calc(100% - 24px));display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);
+  background:rgba(10,14,20,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:50;
 }
-:root[data-theme="light"] .cookie-bar{background:rgba(255,255,255,.75)}
-.cookie-text{flex:1;font-size:14px;line-height:1.35}
-.cookie-actions{display:flex;gap:8px}
+:root[data-theme="light"] .cookie-bar{
+  background:rgba(255,255,255,.9);
+  box-shadow:0 8px 24px rgba(16,30,60,.12);
+}
 
-/* =========================
-   Chaos Effects (de-greened)
-   ========================= */
-@keyframes chaos-shake {
-  0%{ transform: translate(0,0) rotate(0deg) }
-  10%{ transform: translate(4px,-3px) rotate(-0.5deg) }
-  20%{ transform: translate(-5px,3px) rotate(0.6deg) }
-  30%{ transform: translate(6px,5px) rotate(-0.4deg) }
-  40%{ transform: translate(-7px,-5px) rotate(0.8deg) }
-  50%{ transform: translate(0,0) rotate(0deg) }
-  60%{ transform: translate(5px,3px) rotate(0.4deg) }
-  70%{ transform: translate(-6px,-4px) rotate(-0.6deg) }
-  80%{ transform: translate(7px,-3px) rotate(0.5deg) }
-  90%{ transform: translate(-4px,3px) rotate(-0.5deg) }
-  100%{ transform: translate(0,0) rotate(0deg) }
-}
-@keyframes chaos-flicker {
-  0%,100%{ filter:none }
-  25%{ filter:hue-rotate(6deg) contrast(1.05) saturate(1.1) }
-  50%{ filter:hue-rotate(-6deg) contrast(1.1) saturate(1.2) }
-  75%{ filter:hue-rotate(3deg) contrast(1.07) saturate(1.15) }
-}
+/* ---------- Chaos effects (unchanged visuals; neutral colors) ---------- */
+@keyframes chaos-shake{0%{transform:translate(0,0) rotate(0)}10%{transform:translate(4px,-3px) rotate(-.5deg)}20%{transform:translate(-5px,3px) rotate(.6deg)}30%{transform:translate(6px,5px) rotate(-.4deg)}40%{transform:translate(-7px,-5px) rotate(.8deg)}50%{transform:translate(0,0) rotate(0)}60%{transform:translate(5px,3px) rotate(.4deg)}70%{transform:translate(-6px,-4px) rotate(-.6deg)}80%{transform:translate(7px,-3px) rotate(.5deg)}90%{transform:translate(-4px,3px) rotate(-.5deg)}100%{transform:translate(0,0) rotate(0)}}
+@keyframes chaos-flicker{0%,100%{filter:none}25%{filter:hue-rotate(6deg) contrast(1.05) saturate(1.1)}50%{filter:hue-rotate(-6deg) contrast(1.1) saturate(1.2)}75%{filter:hue-rotate(3deg) contrast(1.07) saturate(1.15)}}
 .chaos-mode::after{
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:60; mix-blend-mode:screen;
-  /* remove green splash; keep blue + faint warm pop */
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:60;mix-blend-mode:screen;
   background:
     radial-gradient(120% 80% at 50% 40%, rgba(255,255,255,.12), transparent 60%),
     radial-gradient(120% 80% at 60% 60%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 55%),
     radial-gradient(120% 80% at 40% 70%, rgba(255,65,65,.08), transparent 55%);
-  animation: chaos-flicker 450ms linear infinite;
+  animation:chaos-flicker 450ms linear infinite;
 }
-.chaos-mode{ animation: chaos-shake 120ms linear infinite; }
-.chaos-mode .glass,
-.chaos-mode .header,
-.chaos-mode .container{ animation: chaos-flicker 600ms linear infinite; }
-
-/* Accessibility: respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .chaos-mode,
-  .chaos-mode .glass,
-  .chaos-mode .header,
-  .chaos-mode .container,
-  .chaos-mode::after{ animation:none !important; }
+.chaos-mode{animation:chaos-shake 120ms linear infinite}
+.chaos-mode .glass,.chaos-mode .header,.chaos-mode .container{animation:chaos-flicker 600ms linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .chaos-mode,.chaos-mode .glass,.chaos-mode .header,.chaos-mode .container,.chaos-mode::after{animation:none!important}
 }
 
-/* =========================
-   Premium Card Polish
-   ========================= */
+/* ---------- Card polish ---------- */
 .card{
   border-radius:var(--radius);
   background:
@@ -277,18 +248,15 @@ a{color:inherit;text-decoration:none;opacity:.9} a:hover{opacity:1}
   box-shadow:0 6px 20px rgba(0,0,0,.35);
   backdrop-filter:saturate(130%) blur(10px);
 }
-
-/* =========================
-   FINAL HARD OVERRIDES
-   (ensure no green remnants)
-   ========================= */
-:root{
-  --success: var(--accent);
-  --success-bg: color-mix(in oklab, var(--accent) 20%, transparent);
+:root[data-theme="light"] .card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,.96)),
+    radial-gradient(900px 400px at 10% -20%, color-mix(in oklab, var(--accent) 7%, white 93%), transparent 60%);
+  box-shadow:0 8px 24px rgba(16,30,60,.12);
 }
-/* if any “success/green” classes exist from old code, force them blue */
-.badge-success, .chip-success, .tag-success, .pill-success{
-  background: var(--success-bg) !important;
-  color: var(--fg) !important;
-  border: 1px solid var(--border) !important;
+
+/* ---------- Success/green → blue safety net ---------- */
+:root{ --success: var(--accent); --success-bg: color-mix(in oklab, var(--accent) 20%, transparent) }
+.badge-success,.chip-success,.tag-success,.pill-success{
+  background:var(--success-bg)!important;color:var(--fg)!important;border:1px solid var(--border)!important;
 }
