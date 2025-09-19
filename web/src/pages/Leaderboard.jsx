@@ -3,7 +3,24 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useKV } from '../components/Shared'
 
-/* ---------- helpers (kept local) ---------- */
+/* -------------------- Theme runtime vars (from Admin → ui KV) -------------------- */
+function ThemeVars({ ui }) {
+  useEffect(() => {
+    if (!ui) return
+    const r = document.documentElement
+    if (ui.bg) r.style.setProperty('--bg', ui.bg)
+    if (ui.fg) r.style.setProperty('--fg', ui.fg)
+    if (ui.primary) r.style.setProperty('--accent', ui.primary)
+    if (ui.accent2) r.style.setProperty('--accent-2', ui.accent2)
+    if (ui.radius) r.style.setProperty('--radius', `${ui.radius}px`)
+    if (ui.borderOpacity != null) {
+      r.style.setProperty('--border', `rgba(255,255,255,${ui.borderOpacity})`)
+    }
+  }, [ui])
+  return null
+}
+
+/* ------------------------------ helpers ------------------------------ */
 const normalize = (arr) =>
   (Array.isArray(arr) ? arr : []).map((d) => ({
     id: d.username,
@@ -58,25 +75,23 @@ function formatRemaining(ms) {
   return d > 0 ? `${d}d ${h}:${m}:${sec}` : `${h}:${m}:${sec}`
 }
 
-/* ---------- page ---------- */
+/* ------------------------------ page ------------------------------ */
 export default function Leaderboard() {
   const [rows, setRows] = useState([])
   const [err, setErr] = useState('')
 
-  // KV configs
+  // KVs
   const { data: ui } = useKV('ui')
   const { data: integrations } = useKV('integrations')
   const { data: prizes } = useKV('prizes')
   const { data: countdown } = useKV('countdown')
   const { data: chaos } = useKV('chaos')
-
-  // NEW: reward card KV
-  const { data: reward } = useKV('reward')
+  const { data: reward } = useKV('reward') // NEW
 
   const timeframe = ui?.timeframe ?? '24h'
   const tz = ui?.timezone ?? 'CST'
 
-  // countdown tick
+  // countdown
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -89,7 +104,7 @@ export default function Leaderboard() {
     return Math.max(0, end - now)
   }, [countdown, now])
 
-  // fetch leaderboard data
+  // data
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -126,9 +141,7 @@ export default function Leaderboard() {
       else if (error) setErr('Supabase error: ' + error.message)
       else setErr('No data. Configure Yeet APIs in Admin or seed Supabase.')
     })()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [integrations])
 
   // slices
@@ -154,9 +167,11 @@ export default function Leaderboard() {
     setTimeout(() => setIsChaos(false), Math.max(2000, chaos?.durationMs || 10000))
   }
 
-  // reward card helpers
+  // Reward visuals
+  const logo = reward?.logoUrl || '/YEET-logo.png'
+  const size = Number(reward?.logoSize ?? 72)
+  const pad = Number(reward?.logoPadding ?? 8)
   const safeReqs = Array.isArray(reward?.requirements) ? reward.requirements : []
-  const logo = reward?.logoUrl || '/YEET-logo.png' // default to your YEET Y asset
 
   return (
     <div
@@ -166,6 +181,8 @@ export default function Leaderboard() {
         '--flash-intensity': `${Math.min(1, (chaos?.intensity || 1) * 0.6)}`
       }}
     >
+      <ThemeVars ui={ui} />
+
       {/* subheader & big timer */}
       <div className="glass card subheader">
         <h2 className="title">Top Wagerers</h2>
@@ -184,14 +201,14 @@ export default function Leaderboard() {
         <div className="glass card" style={{ marginBottom: 16, padding: 18 }}>
           {/* Top row */}
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {/* Circular icon area */}
+            {/* Logo bubble */}
             <div style={{
-  width: 72, height: 72, borderRadius: 16, overflow: 'hidden',
-  background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
-  border: '1px solid var(--border)', padding: 8
-}}>
-  <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-</div>
+              width: size, height: size, borderRadius: 16, overflow: 'hidden',
+              background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
+              border: '1px solid var(--border)', padding: pad
+            }}>
+              <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
 
             {/* Title + subtitle */}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -203,12 +220,11 @@ export default function Leaderboard() {
               </div>
             </div>
 
-            {/* Frequency pill */}
-            <div style={{
-              padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 12, opacity: .85,
-              display: 'flex', alignItems: 'center', gap: 8
-            }}>
-              <span style={{ fontSize: 12, fontWeight: 700 }}>{reward.frequencyLabel || 'DAILY'}</span>
+            {/* Frequency pill + copy */}
+            <div className="pill" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700 }}>
+                {reward.frequencyLabel || 'DAILY'}
+              </span>
               {reward.copyText && (
                 <button
                   className="btn"
@@ -223,7 +239,7 @@ export default function Leaderboard() {
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: 'var(--border)', opacity: .35, margin: '16px 0' }} />
+          <div className="section-divider" />
 
           {/* Checklist */}
           {safeReqs.length > 0 && (
@@ -231,11 +247,8 @@ export default function Leaderboard() {
               <div style={{ fontWeight: 800, marginBottom: 10 }}>How to claim this reward:</div>
               <div style={{ display: 'grid', gap: 10 }}>
                 {safeReqs.map((r, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{
-                      width: 20, height: 20, borderRadius: 999, display: 'grid', placeItems: 'center',
-                      background: 'rgba(60,255,180,.15)', border: '1px solid var(--border)'
-                    }}>✔</span>
+                  <div key={i} className="check-item">
+                    <span className="check-dot">✔</span>
                     <div>{r?.text || ''}</div>
                   </div>
                 ))}
@@ -246,14 +259,11 @@ export default function Leaderboard() {
           {/* CTA */}
           <div style={{ marginTop: 16 }}>
             <a
-              className="btn"
+              className="btn accent"
               href={reward?.ctaHref || '#'}
               target={reward?.ctaTarget || '_blank'}
               rel="noreferrer"
-              style={{
-                width: '100%', display: 'inline-block', textAlign: 'center', fontWeight: 800,
-                border: '1px solid var(--border)'
-              }}
+              style={{ width: '100%', display: 'inline-block', textAlign: 'center', fontWeight: 800 }}
             >
               {reward?.ctaLabel || 'REDEEM REWARD'}
             </a>
