@@ -21,8 +21,8 @@ function ThemeToggle(){
 export default function Admin(){
   /* -------- Auth -------- */
   const [session,setSession]=useState(null)
-  const [email,setEmail]=useState('')
-  const [password,setPassword]=useState('')
+  const [email,setEmail]=useState(''); 
+  const [password,setPassword]=useState(''); 
   const [authError,setAuthError]=useState('')
 
   useEffect(()=>{
@@ -48,25 +48,32 @@ export default function Admin(){
   const chaosKV        = useKV('chaos')
   const integrationsKV = useKV('integrations')
   const countdownKV    = useKV('countdown')
-  const linksKV        = useKV('links')          // <— NEW
+  const rewardKV       = useKV('reward')   // <— NEW
+  const linksKV        = useKV('links')    // <— from earlier add
 
-  /* -------- Local state -------- */
-  const [ui,setUI] = useState({
-    title:'', subtitle:'', timeframe:'24h', timezone:'CST',
-    theme:'dark', backgroundImage:''
-  })
+  /* Local state */
+  const [ui,setUI] = useState({ title:'', subtitle:'', timeframe:'24h', timezone:'CST', theme:'dark', backgroundImage:'' })
   const [prizes,setPrizes] = useState([])
   const [chaos,setChaos] = useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
   const [integrations,setIntegrations] = useState({yeetApis:[]})
   const [countdown,setCountdown] = useState({enabled:false,label:'Ends in',endAt:''})
-  const [links,setLinks] = useState([])          // <— NEW
+  const [reward,setReward] = useState({
+    enabled:true,
+    logoUrl:'/YEET-logo.png', logoSize:72, logoPadding:8,
+    title:'$10 Free Balance', subtitle:'Claim a free $10 on-site balance',
+    frequencyLabel:'DAILY', copyText:'',
+    requirements:[{text:'Deposit $20+'},{text:'Wager $100+'},{text:'Open a ticket to claim your prize!'}],
+    ctaLabel:'REDEEM REWARD', ctaHref:'#', ctaTarget:' _blank '
+  })
+  const [links,setLinks] = useState([])
 
-  // hydrate from KV
+  // hydrate
   useEffect(()=>{ if (uiKV.data) setUI(prev=>({...prev,...uiKV.data})) },[uiKV.data])
   useEffect(()=>{ if (Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
   useEffect(()=>{ if (chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
   useEffect(()=>{ if (integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
   useEffect(()=>{ if (countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
+  useEffect(()=>{ if (rewardKV.data) setReward(prev=>({...prev,...rewardKV.data})) },[rewardKV.data])
   useEffect(()=>{ if (Array.isArray(linksKV.data)) setLinks(linksKV.data) },[linksKV.data])
 
   const saveAll = async ()=>{
@@ -75,11 +82,12 @@ export default function Admin(){
     await chaosKV.save(chaos||{})
     await integrationsKV.save(integrations||{yeetApis:[]})
     await countdownKV.save(countdown||{enabled:false})
-    await linksKV.save(links||[])   // <— NEW
+    await rewardKV.save(reward||{})   // <— NEW
+    await linksKV.save(links||[])     // <— keep
     alert('Saved to Supabase ✅')
   }
 
-  /* -------- helpers -------- */
+  /* helpers */
   const addPrize     = ()=> setPrizes([...(prizes||[]), {name:'', amount:''}])
   const updatePrize  = (i,f,v)=>{ const n=prizes.slice(); n[i]={...n[i],[f]:v}; setPrizes(n) }
   const removePrize  = (i)=> setPrizes(prizes.filter((_,idx)=>idx!==i))
@@ -95,8 +103,11 @@ export default function Admin(){
   const updateApi = (i,f,v)=>{ const n=(integrations.yeetApis||[]).slice(); n[i]={...n[i],[f]:v}; setIntegrations({...integrations, yeetApis:n}) }
   const removeApi = (i)=>{ const n=(integrations.yeetApis||[]).filter((_,idx)=>idx!==i); setIntegrations({...integrations, yeetApis:n}) }
 
-  // Links helpers
-  const KNOWN = ['discord','twitter','x','telegram','youtube','tiktok','instagram','website']
+  const addReq = ()=> setReward({...reward, requirements:[...(reward.requirements||[]), {text:''}]})
+  const updateReq = (i,v)=>{ const n=(reward.requirements||[]).slice(); n[i]={...n[i],text:v}; setReward({...reward, requirements:n}) }
+  const removeReq = (i)=> setReward({...reward, requirements:(reward.requirements||[]).filter((_,idx)=>idx!==i)})
+
+  const KNOWN = ['discord','x','telegram','youtube','tiktok','instagram','website']
   const detectKind = (url='')=>{
     const u = url.toLowerCase()
     if (u.includes('discord.gg')||u.includes('discord.com')) return 'discord'
@@ -234,7 +245,54 @@ export default function Admin(){
           </div>
         </div>
 
-        {/* Links / Socials — NEW */}
+        {/* Reward Card (Admin) */}
+        <div className='glass card' style={{gridColumn:'span 12'}}>
+          <h3>Reward Card</h3>
+          <label style={{display:'block',marginBottom:8}}>
+            <input type='checkbox' checked={!!reward.enabled}
+                   onChange={e=>setReward({...reward,enabled:e.target.checked})}/> Enabled
+          </label>
+          <div style={{display:'grid',gap:8,maxWidth:900}}>
+            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:8}}>
+              <label>Logo URL <input className='input' value={reward.logoUrl||''} onChange={e=>setReward({...reward,logoUrl:e.target.value})}/></label>
+              <label>Logo Size (px) <input className='input' type='number' value={Number(reward.logoSize ?? 72)} onChange={e=>setReward({...reward,logoSize:Number(e.target.value)})}/></label>
+              <label>Logo Padding (px) <input className='input' type='number' value={Number(reward.logoPadding ?? 8)} onChange={e=>setReward({...reward,logoPadding:Number(e.target.value)})}/></label>
+            </div>
+            <label>Title <input className='input' value={reward.title||''} onChange={e=>setReward({...reward,title:e.target.value})}/></label>
+            <label>Subtitle <input className='input' value={reward.subtitle||''} onChange={e=>setReward({...reward,subtitle:e.target.value})}/></label>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <label>Frequency label <input className='input' value={reward.frequencyLabel||''} onChange={e=>setReward({...reward,frequencyLabel:e.target.value})}/></label>
+              <label>Copy-to-clipboard text <input className='input' value={reward.copyText||''} onChange={e=>setReward({...reward,copyText:e.target.value})}/></label>
+            </div>
+            <div>
+              <div style={{fontWeight:700, margin:'8px 0'}}>Checklist</div>
+              <div style={{display:'grid',gap:8}}>
+                {(reward.requirements||[]).map((r,i)=>(
+                  <div key={i} className='glass' style={{padding:10, display:'grid', gap:6}}>
+                    <input className='input' placeholder='Requirement text' value={r.text||''} onChange={e=>{
+                      const n=(reward.requirements||[]).slice(); n[i]={...n[i],text:e.target.value}; setReward({...reward,requirements:n})
+                    }}/>
+                    <button className='btn' onClick={()=>{
+                      setReward({...reward, requirements:(reward.requirements||[]).filter((_,idx)=>idx!==i)})
+                    }}>Remove</button>
+                  </div>
+                ))}
+                <button className='btn' onClick={()=>setReward({...reward, requirements:[...(reward.requirements||[]), {text:''}]})}>+ Add Requirement</button>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <label>CTA Label <input className='input' value={reward.ctaLabel||''} onChange={e=>setReward({...reward,ctaLabel:e.target.value})}/></label>
+              <label>CTA Link <input className='input' value={reward.ctaHref||''} onChange={e=>setReward({...reward,ctaHref:e.target.value})}/></label>
+              <label>CTA Target
+                <select className='select' value={reward.ctaTarget||'_blank'} onChange={e=>setReward({...reward,ctaTarget:e.target.value})}>
+                  <option value='_self'>_self</option><option value='_blank'>_blank</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Links / Socials (from previous step) */}
         <div className='glass card' style={{gridColumn:'span 12'}}>
           <h3>Links / Socials</h3>
           <div className='small-note'>Add Discord, X/Twitter, Telegram, YouTube, TikTok, Instagram, or any website.</div>
@@ -247,13 +305,7 @@ export default function Admin(){
                   <input className='input' placeholder='https://...' value={row.url||''}
                          onChange={e=>updateLink(i,'url',e.target.value)}/>
                   <select className='select' value={row.kind||'website'} onChange={e=>updateLink(i,'kind',e.target.value)}>
-                    <option value='discord'>discord</option>
-                    <option value='x'>x</option>
-                    <option value='telegram'>telegram</option>
-                    <option value='youtube'>youtube</option>
-                    <option value='tiktok'>tiktok</option>
-                    <option value='instagram'>instagram</option>
-                    <option value='website'>website</option>
+                    {KNOWN.map(k=> <option key={k} value={k}>{k}</option>)}
                   </select>
                   <button className='btn' onClick={()=>removeLink(i)}>Remove</button>
                 </div>
