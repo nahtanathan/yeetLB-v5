@@ -48,35 +48,26 @@ export default function Admin(){
   const chaosKV        = useKV('chaos')
   const integrationsKV = useKV('integrations')
   const countdownKV    = useKV('countdown')
-  const rewardKV       = useKV('reward')
+  const linksKV        = useKV('links')          // <— NEW
 
   /* -------- Local state -------- */
   const [ui,setUI] = useState({
     title:'', subtitle:'', timeframe:'24h', timezone:'CST',
-    theme:'dark',
-    bg:'#0B1020', fg:'#0D1424', primary:'#2A82FF', accent2:'#2FD3FF',
-    borderOpacity:0.12, radius:16, backgroundImage:''
+    theme:'dark', backgroundImage:''
   })
   const [prizes,setPrizes] = useState([])
   const [chaos,setChaos] = useState({enabled:true,songUrl:'/chaos.wav',durationMs:10000,intensity:1})
   const [integrations,setIntegrations] = useState({yeetApis:[]})
   const [countdown,setCountdown] = useState({enabled:false,label:'Ends in',endAt:''})
-  const [reward,setReward] = useState({
-    enabled:true,
-    logoUrl:'/YEET-logo.png', logoSize:72, logoPadding:8,
-    title:'$10 Free Balance', subtitle:'Claim a free $10 on-site balance',
-    frequencyLabel:'DAILY', copyText:'',
-    requirements:[{text:'Deposit $20+'},{text:'Wager $100+'},{text:'Open a ticket to claim your prize!'}],
-    ctaLabel:'REDEEM REWARD', ctaHref:'#', ctaTarget:'_blank'
-  })
+  const [links,setLinks] = useState([])          // <— NEW
 
-  // hydrate
+  // hydrate from KV
   useEffect(()=>{ if (uiKV.data) setUI(prev=>({...prev,...uiKV.data})) },[uiKV.data])
   useEffect(()=>{ if (Array.isArray(prizesKV.data)) setPrizes(prizesKV.data) },[prizesKV.data])
   useEffect(()=>{ if (chaosKV.data) setChaos(chaosKV.data) },[chaosKV.data])
   useEffect(()=>{ if (integrationsKV.data) setIntegrations(integrationsKV.data) },[integrationsKV.data])
   useEffect(()=>{ if (countdownKV.data) setCountdown(countdownKV.data) },[countdownKV.data])
-  useEffect(()=>{ if (rewardKV.data) setReward(prev=>({...prev,...rewardKV.data})) },[rewardKV.data])
+  useEffect(()=>{ if (Array.isArray(linksKV.data)) setLinks(linksKV.data) },[linksKV.data])
 
   const saveAll = async ()=>{
     await uiKV.save(ui||{})
@@ -84,7 +75,7 @@ export default function Admin(){
     await chaosKV.save(chaos||{})
     await integrationsKV.save(integrations||{yeetApis:[]})
     await countdownKV.save(countdown||{enabled:false})
-    await rewardKV.save(reward||{})
+    await linksKV.save(links||[])   // <— NEW
     alert('Saved to Supabase ✅')
   }
 
@@ -104,11 +95,28 @@ export default function Admin(){
   const updateApi = (i,f,v)=>{ const n=(integrations.yeetApis||[]).slice(); n[i]={...n[i],[f]:v}; setIntegrations({...integrations, yeetApis:n}) }
   const removeApi = (i)=>{ const n=(integrations.yeetApis||[]).filter((_,idx)=>idx!==i); setIntegrations({...integrations, yeetApis:n}) }
 
-  const addReq = ()=> setReward({...reward, requirements:[...(reward.requirements||[]), {text:''}]})
-  const updateReq = (i,v)=>{ const n=(reward.requirements||[]).slice(); n[i]={...n[i],text:v}; setReward({...reward, requirements:n}) }
-  const removeReq = (i)=> setReward({...reward, requirements:(reward.requirements||[]).filter((_,idx)=>idx!==i)})
+  // Links helpers
+  const KNOWN = ['discord','twitter','x','telegram','youtube','tiktok','instagram','website']
+  const detectKind = (url='')=>{
+    const u = url.toLowerCase()
+    if (u.includes('discord.gg')||u.includes('discord.com')) return 'discord'
+    if (u.includes('t.me')||u.includes('telegram.')) return 'telegram'
+    if (u.includes('youtube.')) return 'youtube'
+    if (u.includes('tiktok.')) return 'tiktok'
+    if (u.includes('instagram.')) return 'instagram'
+    if (u.includes('x.com')||u.includes('twitter.')) return 'x'
+    return 'website'
+  }
+  const addLink = ()=> setLinks([...(links||[]), { title:'Discord', url:'', kind:'discord' }])
+  const updateLink = (i,f,v)=>{
+    const n=links.slice()
+    const row={...n[i],[f]:v}
+    if (f==='url' && (!row.kind || row.kind==='website')) row.kind = detectKind(v)
+    n[i]=row; setLinks(n)
+  }
+  const removeLink = (i)=> setLinks(links.filter((_,idx)=>idx!==i))
 
-  /* -------- Login -------- */
+  /* -------- Auth gate -------- */
   if (!session){
     return (
       <div className='glass card' style={{maxWidth:520,margin:'40px auto'}}>
@@ -162,24 +170,6 @@ export default function Admin(){
             <label>Background Image URL
               <input className='input' value={ui?.backgroundImage||''} onChange={e=>setUI({...ui,backgroundImage:e.target.value})}/>
             </label>
-
-            <div className='section-divider'/>
-
-            <div style={{fontWeight:700}}>Palette</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:8}}>
-              <label>Background <input className='input' value={ui?.bg||''} onChange={e=>setUI({...ui,bg:e.target.value})}/></label>
-              <label>Foreground <input className='input' value={ui?.fg||''} onChange={e=>setUI({...ui,fg:e.target.value})}/></label>
-              <label>Primary <input className='input' value={ui?.primary||''} onChange={e=>setUI({...ui,primary:e.target.value})}/></label>
-              <label>Accent 2 <input className='input' value={ui?.accent2||''} onChange={e=>setUI({...ui,accent2:e.target.value})}/></label>
-              <label>Border Opacity (0–.3)
-                <input className='input' type='number' step='0.01' value={ui?.borderOpacity ?? 0.12}
-                       onChange={e=>setUI({...ui,borderOpacity:Number(e.target.value)})}/>
-              </label>
-              <label>Radius (px)
-                <input className='input' type='number' value={ui?.radius ?? 16}
-                       onChange={e=>setUI({...ui,radius:Number(e.target.value)})}/>
-              </label>
-            </div>
           </div>
         </div>
 
@@ -217,11 +207,8 @@ export default function Admin(){
                     <input className='input' placeholder='startDate (YYYY-MM-DD)' value={api.startDate||''} onChange={e=>updateApi(i,'startDate',e.target.value)}/>
                     <input className='input' placeholder='endDate (YYYY-MM-DD)' value={api.endDate||''} onChange={e=>updateApi(i,'endDate',e.target.value)}/>
                   </div>
-                  <label>
-                    <input type='checkbox' checked={!!api.useProxy} onChange={e=>updateApi(i,'useProxy',e.target.checked)}/> Use Proxy
-                  </label>
-                  <input className='input' placeholder='Proxy Base'
-                         value={api.proxyBase||''} onChange={e=>updateApi(i,'proxyBase',e.target.value)}/>
+                  <label><input type='checkbox' checked={!!api.useProxy} onChange={e=>updateApi(i,'useProxy',e.target.checked)}/> Use Proxy</label>
+                  <input className='input' placeholder='Proxy Base' value={api.proxyBase||''} onChange={e=>updateApi(i,'proxyBase',e.target.value)}/>
                   <button className='btn' onClick={()=>removeApi(i)}>Remove</button>
                 </div>
               </div>
@@ -238,11 +225,7 @@ export default function Admin(){
                    onChange={e=>setCountdown({...countdown,enabled:e.target.checked})}/> Enabled
           </label>
           <div style={{display:'grid',gap:8,maxWidth:560}}>
-            <label>Label
-              <input className='input' placeholder='Ends in'
-                     value={countdown.label||''}
-                     onChange={e=>setCountdown({...countdown,label:e.target.value})}/>
-            </label>
+            <label>Label <input className='input' value={countdown.label||''} onChange={e=>setCountdown({...countdown,label:e.target.value})}/></label>
             <label>End date/time
               <input className='input' type='datetime-local'
                      value={(countdown.endAt ? new Date(countdown.endAt) : new Date()).toISOString().slice(0,16)}
@@ -251,46 +234,32 @@ export default function Admin(){
           </div>
         </div>
 
-        {/* Reward Card */}
+        {/* Links / Socials — NEW */}
         <div className='glass card' style={{gridColumn:'span 12'}}>
-          <h3>Reward Card</h3>
-          <label style={{display:'block',marginBottom:8}}>
-            <input type='checkbox' checked={!!reward.enabled}
-                   onChange={e=>setReward({...reward,enabled:e.target.checked})}/> Enabled
-          </label>
-          <div style={{display:'grid',gap:8,maxWidth:900}}>
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:8}}>
-              <label>Logo URL <input className='input' value={reward.logoUrl||''} onChange={e=>setReward({...reward,logoUrl:e.target.value})}/></label>
-              <label>Logo Size (px) <input className='input' type='number' value={Number(reward.logoSize ?? 72)} onChange={e=>setReward({...reward,logoSize:Number(e.target.value)})}/></label>
-              <label>Logo Padding (px) <input className='input' type='number' value={Number(reward.logoPadding ?? 8)} onChange={e=>setReward({...reward,logoPadding:Number(e.target.value)})}/></label>
-            </div>
-            <label>Title <input className='input' value={reward.title||''} onChange={e=>setReward({...reward,title:e.target.value})}/></label>
-            <label>Subtitle <input className='input' value={reward.subtitle||''} onChange={e=>setReward({...reward,subtitle:e.target.value})}/></label>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-              <label>Frequency label <input className='input' value={reward.frequencyLabel||''} onChange={e=>setReward({...reward,frequencyLabel:e.target.value})}/></label>
-              <label>Copy text <input className='input' value={reward.copyText||''} onChange={e=>setReward({...reward,copyText:e.target.value})}/></label>
-            </div>
-            <div>
-              <div style={{fontWeight:700, margin:'8px 0'}}>Checklist</div>
-              <div style={{display:'grid',gap:8}}>
-                {(reward.requirements||[]).map((r,i)=>(
-                  <div key={i} className='glass' style={{padding:10, display:'grid', gap:6}}>
-                    <input className='input' placeholder='Requirement text' value={r.text||''} onChange={e=>updateReq(i, e.target.value)}/>
-                    <button className='btn' onClick={()=>removeReq(i)}>Remove</button>
-                  </div>
-                ))}
-                <button className='btn' onClick={addReq}>+ Add Requirement</button>
+          <h3>Links / Socials</h3>
+          <div className='small-note'>Add Discord, X/Twitter, Telegram, YouTube, TikTok, Instagram, or any website.</div>
+          <div style={{display:'grid',gap:8}}>
+            {(links||[]).map((row,i)=>(
+              <div key={i} className='glass' style={{padding:10}}>
+                <div style={{display:'grid',gap:6, gridTemplateColumns:'2fr 3fr 1fr auto', alignItems:'center'}}>
+                  <input className='input' placeholder='Title (e.g., Discord)' value={row.title||''}
+                         onChange={e=>updateLink(i,'title',e.target.value)}/>
+                  <input className='input' placeholder='https://...' value={row.url||''}
+                         onChange={e=>updateLink(i,'url',e.target.value)}/>
+                  <select className='select' value={row.kind||'website'} onChange={e=>updateLink(i,'kind',e.target.value)}>
+                    <option value='discord'>discord</option>
+                    <option value='x'>x</option>
+                    <option value='telegram'>telegram</option>
+                    <option value='youtube'>youtube</option>
+                    <option value='tiktok'>tiktok</option>
+                    <option value='instagram'>instagram</option>
+                    <option value='website'>website</option>
+                  </select>
+                  <button className='btn' onClick={()=>removeLink(i)}>Remove</button>
+                </div>
               </div>
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-              <label>CTA Label <input className='input' value={reward.ctaLabel||''} onChange={e=>setReward({...reward,ctaLabel:e.target.value})}/></label>
-              <label>CTA Link <input className='input' value={reward.ctaHref||''} onChange={e=>setReward({...reward,ctaHref:e.target.value})}/></label>
-              <label>CTA Target
-                <select className='select' value={reward.ctaTarget||'_blank'} onChange={e=>setReward({...reward,ctaTarget:e.target.value})}>
-                  <option value='_self'>_self</option><option value='_blank'>_blank</option>
-                </select>
-              </label>
-            </div>
+            ))}
+            <button className='btn' onClick={addLink}>+ Add Link</button>
           </div>
         </div>
 
