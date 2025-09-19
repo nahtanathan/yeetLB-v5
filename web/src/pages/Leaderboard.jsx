@@ -70,6 +70,9 @@ export default function Leaderboard() {
   const { data: countdown } = useKV('countdown')
   const { data: chaos } = useKV('chaos')
 
+  // NEW: reward card KV
+  const { data: reward } = useKV('reward')
+
   const timeframe = ui?.timeframe ?? '24h'
   const tz = ui?.timezone ?? 'CST'
 
@@ -131,7 +134,6 @@ export default function Leaderboard() {
   // slices
   const top1 = rows[0] ? [rows[0]] : []
   const top2and3 = rows.slice(1, 3)
-  const rest = rows.slice(3)
 
   const prizeAt = (i) => (Array.isArray(prizes) && prizes[i] ? prizes[i] : null)
   const fmtPrize = (p) => (!p ? '' : [p.name, p.amount].filter(Boolean).join(' · '))
@@ -151,6 +153,10 @@ export default function Leaderboard() {
     setIsChaos(true)
     setTimeout(() => setIsChaos(false), Math.max(2000, chaos?.durationMs || 10000))
   }
+
+  // reward card helpers
+  const safeReqs = Array.isArray(reward?.requirements) ? reward.requirements : []
+  const logo = reward?.logoUrl || '/YEET-logo.png' // default to your YEET Y asset
 
   return (
     <div
@@ -172,6 +178,88 @@ export default function Leaderboard() {
           </div>
         )}
       </div>
+
+      {/* Reward / Promo Card */}
+      {reward?.enabled && (
+        <div className="glass card" style={{ marginBottom: 16, padding: 18 }}>
+          {/* Top row */}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            {/* Circular icon area */}
+            <div style={{
+              width: 56, height: 56, borderRadius: 16, overflow: 'hidden',
+              background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', flex: '0 0 auto',
+              border: '1px solid var(--border)'
+            }}>
+              <img src={logo} alt="Reward" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+
+            {/* Title + subtitle */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: .2 }}>
+                {reward.title || '$10 Free Balance'}
+              </div>
+              <div className="small-note" style={{ opacity: .9 }}>
+                {reward.subtitle || 'Claim a free $10 on-site balance'}
+              </div>
+            </div>
+
+            {/* Frequency pill */}
+            <div style={{
+              padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 12, opacity: .85,
+              display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 700 }}>{reward.frequencyLabel || 'DAILY'}</span>
+              {reward.copyText && (
+                <button
+                  className="btn"
+                  onClick={() => navigator.clipboard.writeText(reward.copyText)}
+                  title="Copy"
+                  style={{ padding: '4px 6px' }}
+                >
+                  📋
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: 'var(--border)', opacity: .35, margin: '16px 0' }} />
+
+          {/* Checklist */}
+          {safeReqs.length > 0 && (
+            <>
+              <div style={{ fontWeight: 800, marginBottom: 10 }}>How to claim this reward:</div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {safeReqs.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{
+                      width: 20, height: 20, borderRadius: 999, display: 'grid', placeItems: 'center',
+                      background: 'rgba(60,255,180,.15)', border: '1px solid var(--border)'
+                    }}>✔</span>
+                    <div>{r?.text || ''}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* CTA */}
+          <div style={{ marginTop: 16 }}>
+            <a
+              className="btn"
+              href={reward?.ctaHref || '#'}
+              target={reward?.ctaTarget || '_blank'}
+              rel="noreferrer"
+              style={{
+                width: '100%', display: 'inline-block', textAlign: 'center', fontWeight: 800,
+                border: '1px solid var(--border)'
+              }}
+            >
+              {reward?.ctaLabel || 'REDEEM REWARD'}
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* #1 */}
       {top1.length > 0 && (
@@ -271,7 +359,7 @@ export default function Leaderboard() {
         </table>
       </div>
 
-      {/* chaos trigger (no heading, no descriptor) */}
+      {/* chaos trigger */}
       {chaos?.enabled && (
         <div className="glass card" style={{ marginTop: 24, textAlign: 'center' }}>
           <audio ref={audioRef} src={chaos?.songUrl || '/chaos.wav'} preload="auto" />
